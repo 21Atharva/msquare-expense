@@ -1,0 +1,223 @@
+<mat-drawer-container class="example-container" hasBackdrop="true" autosize>
+  <mat-drawer style="height: 100%" #drawer class="example-sidenav" mode="over">
+    <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" />
+    <h2 style="border-bottom: 2px solid red; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      Msquare Portal
+    </h2>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onProfile()">
+        <mat-icon>perm_identity</mat-icon> Profile
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onView()">
+        <mat-icon>equalizer</mat-icon> View Expenses
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLeaveApplication()">
+        <mat-icon>add</mat-icon> Leave Application
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onEmpDashboard()">
+        <mat-icon>dashboard</mat-icon> Leave Dashboard
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLogout()">
+        <mat-icon>logout</mat-icon> Logout
+      </button>
+    </div>
+  </mat-drawer>
+
+  <mat-drawer-content>
+    <mat-toolbar style="border-bottom: 1px solid black">
+      <button mat-icon-button (click)="drawer.toggle()">
+        <mat-icon>list</mat-icon>
+      </button>
+      <span>Msquare Portal</span>
+      <span class="example-spacer"></span>
+      <button mat-raised-button color="accent" (click)="onLogout()">
+        <mat-icon>logout</mat-icon> Logout
+      </button>
+    </mat-toolbar>
+
+    <div class="dashboard-container">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <h2 style="margin: 0;">Leave Dashboard</h2>
+  
+  <!-- Show Employees button visible only to manager -->
+  <div *ngIf="userRole === 'manager'">
+    <button mat-raised-button color="accent" (click)="toggleEmployees()">
+      {{ showEmployees ? 'Hide' : 'Show' }} Department Employees
+    </button>
+  </div>
+</div>
+
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <mat-card class="summary-card total">
+          <h3>Total Leaves</h3>
+          <p>{{ totalLeaves }}</p>
+        </mat-card>
+        <mat-card class="summary-card taken">
+          <h3>Leaves Taken</h3>
+          <p>{{ leavesTaken }}</p>
+        </mat-card>
+        <mat-card class="summary-card pending">
+          <h3>Pending Leaves</h3>
+          <p>{{ pendingLeaves }}</p>
+        </mat-card>
+      </div>
+
+      <!-- Leave History Table -->
+      <h3 class="section-title">Previous Leave Applications</h3>
+      <div *ngIf="pagedLeaves.length > 0; else noLeaves">
+        <table mat-table [dataSource]="pagedLeaves" class="mat-elevation-z2 full-width-table striped-table">
+
+          <!-- leaveType -->
+          <ng-container matColumnDef="leaveType">
+            <th mat-header-cell *matHeaderCellDef> Leave Type </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              <ng-container *ngIf="editingIndex === i && editedLeave; else showLeaveType">
+                <mat-form-field appearance="fill">
+                  <input matInput [(ngModel)]="editedLeave.leaveType" />
+                </mat-form-field>
+              </ng-container>
+              <ng-template #showLeaveType>{{ element.leaveType }}</ng-template>
+            </td>
+          </ng-container>
+
+          <!-- startDate -->
+          <ng-container matColumnDef="startDate">
+            <th mat-header-cell *matHeaderCellDef> Start Date </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              <ng-container *ngIf="editingIndex === i && editedLeave; else showStartDate">
+                <mat-form-field appearance="fill">
+                  <input matInput [matDatepicker]="picker1" [(ngModel)]="editedLeave.startDate">
+                  <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+                  <mat-datepicker #picker1></mat-datepicker>
+                </mat-form-field>
+              </ng-container>
+              <ng-template #showStartDate>{{ element.startDate | date }}</ng-template>
+            </td>
+          </ng-container>
+
+          <!-- endDate -->
+          <ng-container matColumnDef="endDate">
+            <th mat-header-cell *matHeaderCellDef> End Date </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              <ng-container *ngIf="editingIndex === i && editedLeave; else showEndDate">
+                <mat-form-field appearance="fill">
+                  <input matInput [matDatepicker]="picker2" [(ngModel)]="editedLeave.endDate">
+                  <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+                  <mat-datepicker #picker2></mat-datepicker>
+                </mat-form-field>
+              </ng-container>
+              <ng-template #showEndDate>{{ element.endDate | date }}</ng-template>
+            </td>
+          </ng-container>
+
+          <!-- status -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef> Status </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.status }}
+            </td>
+          </ng-container>
+
+          <!-- reason -->
+          <ng-container matColumnDef="reason">
+            <th mat-header-cell *matHeaderCellDef> Reason </th>
+            <td mat-cell *matCellDef="let element; let i = index">
+              <ng-container *ngIf="editingIndex === i && editedLeave; else showReason">
+                <mat-form-field appearance="fill">
+                  <input matInput [(ngModel)]="editedLeave.reason" />
+                </mat-form-field>
+              </ng-container>
+              <ng-template #showReason>
+                <span [matTooltip]="element.reason" matTooltipPosition="above" matTooltipShowDelay="500">
+                  {{ element.reason.length > 20 ? (element.reason | slice:0:20) + '...' : element.reason }}
+                </span>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Actions -->
+          <ng-container *ngIf="hasPendingLeaves()" matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> Actions </th>
+            <td mat-cell *matCellDef="let row; let i = index">
+              <ng-container *ngIf="editingIndex === i; else editButtons">
+                <button mat-icon-button color="primary" (click)="submitEdit()">
+                  <mat-icon>check</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="cancelEditing()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </ng-container>
+              <ng-template #editButtons>
+                <button mat-icon-button color="accent" (click)="startEditing(i)" *ngIf="row.status === 'Pending'">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="onDeleteLeave(i)" *ngIf="row.status === 'Pending'">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+          <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+        </table>
+
+        <!-- Paginator -->
+        <mat-paginator [length]="allLeaves.length" [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 20]"
+          (page)="pageChange($event)" showFirstLastButtons>
+        </mat-paginator>
+      </div>
+
+      <ng-template #noLeaves>
+        <div style="text-align: center; margin-top: 30px; font-size: 18px; color: gray;">
+          You haven’t taken any leave yet.
+        </div>
+      </ng-template>
+
+      <!-- Show Employees Button & Table for Managers -->
+      <div *ngIf="userRole === 'manager'" style="margin-top: 40px;">
+        <div *ngIf="showEmployees" style="margin-top: 20px;">
+          <h3>Employees in Your Department</h3>
+
+          <table mat-table [dataSource]="employeesInDept" class="mat-elevation-z2 full-width-table striped-table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef> Name </th>
+              <td mat-cell *matCellDef="let emp"> {{ emp.name }} </td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef> Email </th>
+              <td mat-cell *matCellDef="let emp"> {{ emp.email }} </td>
+            </ng-container>
+
+            <ng-container matColumnDef="department">
+              <th mat-header-cell *matHeaderCellDef> Department </th>
+              <td mat-cell *matCellDef="let emp"> {{ emp.department }} </td>
+            </ng-container>
+
+            <ng-container matColumnDef="role">
+              <th mat-header-cell *matHeaderCellDef> Role </th>
+              <td mat-cell *matCellDef="let emp"> {{ emp.role }} </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="employeeColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: employeeColumns"></tr>
+          </table>
+
+          <div *ngIf="employeesInDept.length === 0" style="margin-top: 20px; color: gray;">
+            No employees found in your department.
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>

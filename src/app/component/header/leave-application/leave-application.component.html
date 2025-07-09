@@ -1,0 +1,142 @@
+<mat-drawer-container class="example-container" hasBackdrop="true" autosize>
+  <!-- Sidebar Drawer -->
+  <mat-drawer #drawer mode="over" class="example-sidenav">
+    <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" />
+    
+    <h2 style="border-bottom: 2px solid red; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      Msquare Portal
+    </h2>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="openDialog()">
+        <mat-icon>perm_identity</mat-icon> Profile
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onView()">
+        <mat-icon>equalizer</mat-icon> View Expenses
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLeaveApplication()">
+        <mat-icon>add</mat-icon> Leave Application
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onEmpDashboard()">
+        <mat-icon>dashboard</mat-icon> Leave Dashboard
+      </button>
+    </div>
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLogout()">
+        <mat-icon>logout</mat-icon> Logout
+      </button>
+    </div>
+  </mat-drawer>
+
+  <!-- Main Content Area -->
+  <mat-drawer-content>
+    <mat-toolbar style="border-bottom: 1px solid black">
+      <button mat-icon-button (click)="drawer.toggle()">
+        <mat-icon>list</mat-icon>
+      </button>
+      <span>Msquare Portal</span>
+      <span class="example-spacer"></span>
+      <button mat-raised-button color="accent" (click)="onLogout()">
+        <mat-icon>logout</mat-icon> Logout
+      </button>
+    </mat-toolbar>
+
+    <div style="text-align: center; margin-top: 20px; margin-bottom: -30px;">
+    <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #3f51b5; font-weight: 500;">
+      Leave Request
+    </h1>
+  </div>
+
+    <!-- Main Page Content -->
+    <div class="page-center">
+      <div class="leave-container">
+        <!-- LEFT: FORM -->
+        <form [formGroup]="leaveForm" (ngSubmit)="onSubmit()" class="leave-form">
+          <!-- <h2>Leave Request</h2> -->
+
+          <!-- Leave Type -->
+          <label for="leaveType">Leave Type <span class="required">*</span></label>
+          <select formControlName="leaveType" id="leaveType">
+            <option value="">Select</option>
+            <option *ngFor="let type of leaveTypes" [value]="type">{{ type }}</option>
+          </select>
+          <div class="error" *ngIf="leaveForm.get('leaveType')?.touched && leaveForm.get('leaveType')?.hasError('required')">
+            Leave type is required.
+          </div>
+
+          <!-- Remember Me -->
+          <div class="checkbox-row">
+            <input type="checkbox" id="rememberMe" />
+            <label for="rememberMe">Remember me</label>
+          </div>
+
+          <!-- Date Range -->
+          <label>Dates <span class="required">*</span></label>
+          <div class="date-range">
+            <input type="date" formControlName="startDate" />
+            <span>to</span>
+            <input type="date" formControlName="endDate" />
+          </div>
+          <div class="error" *ngIf="leaveForm.get('startDate')?.touched && leaveForm.get('startDate')?.hasError('required')">
+            Start date is required.
+          </div>
+          <div class="error" *ngIf="leaveForm.get('endDate')?.touched && leaveForm.get('endDate')?.hasError('required')">
+            End date is required.
+          </div>
+
+          <!-- Reason -->
+          <label for="reason">About</label>
+          <textarea formControlName="reason" id="reason" placeholder="Include comments for your approver"></textarea>
+          <div class="error" *ngIf="leaveForm.get('reason')?.touched && leaveForm.get('reason')?.hasError('required')">
+            Reason is required.
+          </div>
+
+          <!-- File Upload -->
+          <label>Attachments</label>
+          <div class="upload-box">
+            <input type="file" id="fileUpload" (change)="onFileSelected($event)" hidden />
+            <label for="fileUpload" class="upload-label">
+              <p><strong>Upload a file</strong> or drag and drop</p>
+              <small *ngIf="!selectedFileName">PNG, JPG, GIF up to 10MB</small>
+              <small *ngIf="selectedFileName"><b>Selected:</b> {{ selectedFileName }}</small>
+            </label>
+          </div>
+
+          <!-- Buttons -->
+          <div class="form-buttons">
+            <button type="button" (click)="cancel()">Cancel</button>
+            <button type="submit" class="submit-btn">Request Now</button>
+          </div>
+        </form>
+
+        <!-- RIGHT: SUMMARY -->
+        <div class="leave-summary">
+  <h4><b>Your Request Includes</b></h4>
+
+  <div class="summary-day" *ngFor="let day of leaveSummary">
+    <span>{{ day.date }}</span>
+    <span class="badge" [ngClass]="day.type">{{ day.label }}</span>
+  </div>
+
+  <!-- Summary Counts Right Aligned -->
+  <div class="summary-counts">
+    <div class="summary-count-row">
+      <span>Total Leaves Count</span>
+      <span class="badge green">{{ totalLeaveDays }}</span>
+    </div>
+    <div class="summary-count-row">
+      <span>Pending Leaves</span>
+      <span class="badge orange">{{ pendingLeaves }}</span>
+    </div>
+  </div>
+</div>
+
+      </div>
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>

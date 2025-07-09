@@ -1,0 +1,665 @@
+.drawer-container {
+  height: 100vh;
+}
+
+.drawer {
+  width: 250px;
+  padding: 20px;
+  background-color: #fff;
+}
+
+.drawer-title {
+  font-size: 20px;
+  border-bottom: 2px solid red;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+
+.drawer-buttons button {
+  display: block;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+// Optional overlay styling (for darker background when drawer opens)
+::ng-deep .mat-drawer-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive Drawer */
+@media (max-width: 768px) {
+  .drawer {
+    width: 200px;
+  }
+}
+
+/* Leave Cards Grid */
+.leave-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  background-color: #f9fafb;
+}
+
+.leave-card {
+//   max-width: 260px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #333333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  }
+}
+
+mat-card-header {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 12px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.status-approved {
+  color: #256029;
+  background-color: #d1e7dd;
+}
+
+.status-rejected {
+  color: #842029;
+  background-color: #f8d7da;
+}
+
+.status-pending {
+  color: #856404;
+  background-color: #fff3cd;
+}
+
+mat-card-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-around;
+  padding: 14px;
+  border-top: 1px solid #e0e0e0;
+}
+
+
+
+.admin-dashboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  
+//   padding-bottom: 80px; // space for paginator
+}
+
+.leave-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  flex: 1;
+}
+
+
+.example-spacer {
+  flex: 1 1 auto;
+}
+
+.example-sidenav-content {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.example-sidenav {
+  padding-left: 50px;
+  padding-right: 100px;
+  padding-top: 50px;
+}
+.btns{
+  position: fixed;
+  bottom: 10%;
+  right: 5%;
+  z-index: 100;
+    width:50px;
+  height:50px;
+}
+.social-btns button{
+  color: white;
+  background-color: white;
+  
+}
+.side-nav-btn button:hover{
+  transform: scale(1.1);
+  transition: .5s;
+}
+
+.reason-text {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 100%;
+}
+::ng-deep .mat-tooltip {
+  white-space: pre-line; /* allows line breaks in tooltip */
+  max-width: 300px;
+  font-size: 14px;
+}
+
+.leave-card {
+  margin: 15px;
+  padding: 15px;
+
+  .card-title {
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .email {
+    font-size: 13px;
+    color: gray;
+  }
+
+  .card-row {
+    display: flex;
+    align-items: center;
+    margin: 6px 0;
+    font-size: 14px;
+    gap: 8px;
+  }
+
+  .card-icon {
+    font-size: 18px;
+    color: #3f51b5;
+  }
+
+  .status-row {
+    align-items: center;
+    gap: 5px;
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-left: 8px;
+
+      &.status-approved {
+        background-color: #e8f5e9;
+        color: #256029;
+      }
+
+      &.status-rejected {
+        background-color: #fdecea;
+        color: #842029;
+      }
+
+      &.status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+    }
+  }
+
+  .reason-text {
+    display: inline-block;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+  }
+}
+/* Scrollable table container for smaller screens */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+/* Make drawer content and dashboard stack properly */
+.drawer-container,
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive mat-cells and header cells */
+.mat-header-cell,
+.mat-cell {
+  padding: 12px 8px;
+  font-size: 14px;
+  word-wrap: break-word;
+}
+
+/* Responsive toolbar */
+mat-toolbar {
+  flex-wrap: wrap;
+}
+
+/* For buttons in the drawer */
+
+/* Adjust typography and spacing for mobile */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 10px;
+  }
+
+  mat-toolbar span {
+    font-size: 16px;
+  }
+
+  .mat-header-cell,
+  .mat-cell {
+    font-size: 13px;
+    padding: 10px 6px;
+  }
+
+  .status-badge {
+    font-size: 12px;
+  }
+
+  .action-btn {
+    margin-bottom: 6px;
+    width: 100%;
+  }
+
+  .email {
+    font-size: 12px;
+  }
+}
+@media (max-width: 600px) {
+  .action-btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+}
+
+ * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .page-date {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .user-info span {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.total { border-left-color: #8b5cf6; }
+        .stat-card.new { border-left-color: #22c55e; }
+        .stat-card.rejected { border-left-color: #ef4444; }
+        .stat-card.pending { border-left-color: #f59e0b; }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-card.total .stat-number { color: #8b5cf6; }
+        .stat-card.new .stat-number { color: #22c55e; }
+        .stat-card.rejected .stat-number { color: #ef4444; }
+        .stat-card.pending .stat-number { color: #f59e0b; }
+
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f59e0b;
+        }
+
+        .leave-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .leave-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .leave-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .employee-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .employee-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .employee-details h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+
+        .employee-id {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .leave-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .card-content {
+            margin-bottom: 20px;
+        }
+
+        .leave-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .leave-dates {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .leave-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .detail-icon {
+            font-size: 18px;
+            color: #64748b;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-deny {
+               background: #ffd6d6;
+    color: #dc2626;
+    border: 1px solid #d90707;
+        }
+
+        .btn-deny:hover {
+            background: #fee2e2;
+            transform: translateY(-1px);
+        }
+
+        .btn-approve {
+            background: #c1eecf;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+        .btn-approve:hover {
+            background: #dcfce7;
+            transform: translateY(-1px);
+        }
+
+        .btn-detail {
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+
+        .btn-detail:hover {
+            background: #dbeafe;
+            transform: translateY(-1px);
+        }
+
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 456px) {
+            .container {
+                padding: 16px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+           .leave-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* ✅ Reduce from 400px to 300px */
+  gap: 20px;
+}
+
+            .card-actions {
+                flex-direction: column;
+            }
+
+            .leave-details {
+                grid-template-columns: 1fr;
+            }
+        }
+
+      @media (max-width: 300px) {
+  .leave-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .leave-details {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn-deny.disabled-btn {
+ background-color: #ced3d0 !important;
+    color: #525252 !important
+}
+
+.btn-approve.disabled-btn {
+ background-color: #ced3d0 !important;
+    color: #525252 !important
+}
+.disabled-btn {
+  background-color: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed;
+}
+
+
+.brand-logo {
+  max-width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+  background: transparent;
+}

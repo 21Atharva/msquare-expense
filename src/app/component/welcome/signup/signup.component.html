@@ -1,0 +1,138 @@
+<div class="signup-card-wrapper">
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <h1 class="brand-title">Msquare Engineers</h1>
+    <p class="tagline">Empowering Engineers with Smart Tools</p>
+    <p class="description">
+      Track your projects, manage tasks, and stay connected with your team – all in one place.
+    </p>
+  </div>
+
+  <!-- Right Form Section -->
+  <div class="signup-card">
+    <div class="form-card">
+      <div style="display: flex; justify-content: center;">
+        <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" />
+      </div>
+
+      <h2 class="title">Create Your Account</h2>
+
+      <!-- Stepper -->
+      <div class="stepper">
+        <div class="step" [class.completed]="currentStep > 1" [class.active]="currentStep === 1">
+          <div class="circle">1</div>
+          <div class="label">Personal</div>
+        </div>
+        <div class="line" [class.completed]="currentStep > 1"></div>
+        <div class="step" [class.completed]="currentStep > 2" [class.active]="currentStep === 2">
+          <div class="circle">2</div>
+          <div class="label">Security</div>
+        </div>
+        <div class="line" [class.completed]="currentStep > 2"></div>
+        <div class="step" [class.active]="currentStep === 3">
+          <div class="circle">3</div>
+          <div class="label">Role</div>
+        </div>
+      </div>
+
+      <!-- Form Start -->
+      <form [formGroup]="signUpForm">
+        <!-- Step 1 -->
+        <div *ngIf="currentStep === 1">
+          <mat-form-field appearance="outline" class="field">
+            <mat-label>Full Name</mat-label>
+            <input matInput formControlName="name" placeholder="Full Name" />
+            <mat-error *ngIf="signUpForm.get('name')?.hasError('required')">Full Name is required</mat-error>
+            <mat-error *ngIf="signUpForm.get('name')?.hasError('pattern')">Only letters and spaces allowed</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username" placeholder="Username" />
+            <mat-error *ngIf="signUpForm.get('username')?.hasError('required')">Username is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="gmail" placeholder="abc@gmail.com" />
+            <mat-error *ngIf="signUpForm.get('gmail')?.hasError('required')">Email is required</mat-error>
+            <mat-error *ngIf="signUpForm.get('gmail')?.hasError('email')">Enter a valid email</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Step 2 -->
+        <div *ngIf="currentStep === 2">
+          <mat-form-field appearance="outline" class="field">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" placeholder="********" />
+            <mat-error *ngIf="signUpForm.get('password')?.hasError('required')">Password is required</mat-error>
+            <mat-error *ngIf="signUpForm.get('password')?.hasError('minlength')">Min 8 characters required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field">
+            <mat-label>Set PIN</mat-label>
+            <input matInput type="password" maxlength="4" formControlName="pin" placeholder="4-digit PIN" />
+            <mat-error *ngIf="signUpForm.get('pin')?.hasError('required')">PIN is required</mat-error>
+            <mat-error *ngIf="signUpForm.get('pin')?.hasError('pattern')">PIN must be 4 digits</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Step 3 -->
+        <div *ngIf="currentStep === 3">
+          <mat-form-field appearance="outline" class="field">
+            <mat-label>Select Role</mat-label>
+            <mat-select formControlName="role">
+              <mat-option value="admin">Admin</mat-option>
+              <mat-option value="employee">Employee</mat-option>
+              <mat-option value="manager">Manager</mat-option>
+            </mat-select>
+            <mat-error *ngIf="signUpForm.get('role')?.hasError('required')">Role is required</mat-error>
+          </mat-form-field>
+
+          <!-- If role is EMPLOYEE -->
+        <mat-form-field *ngIf="signUpForm.get('role')?.value === 'employee'" appearance="outline" class="field">
+  <mat-label>Select Department</mat-label>
+  <mat-select formControlName="department">
+    <mat-option *ngFor="let dept of getUniqueManagerDepartments()" [value]="dept">
+      {{ dept }}
+    </mat-option>
+  </mat-select>
+  <mat-error *ngIf="signUpForm.get('department')?.hasError('required')">
+    Department is required
+  </mat-error>
+</mat-form-field>
+
+
+          <!-- If role is MANAGER -->
+          <mat-form-field *ngIf="signUpForm.get('role')?.value === 'manager'" appearance="outline" class="field">
+            <mat-label>Assign Department to Manage</mat-label>
+            <mat-select formControlName="department">
+              <mat-option *ngFor="let dept of departmentList" [value]="dept">
+                {{ dept }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="signUpForm.get('department')?.hasError('required')">Department is required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Buttons -->
+        <div class="btns">
+          <button *ngIf="currentStep > 1 && !SignUpContinue" mat-stroked-button type="button" (click)="prevStep()">Back</button>
+          <button *ngIf="currentStep < 3 && !SignUpContinue" mat-flat-button color="primary" type="button" (click)="nextStep()">Next</button>
+          <button *ngIf="currentStep === 3 && !SignUpContinue" mat-raised-button color="primary" type="button" (click)="onProceed()">
+            <mat-icon>person_add</mat-icon> Signup
+          </button>
+          <button *ngIf="SignUpContinue" class="loading-button" type="button" disabled>
+            <span class="spinner"></span> Creating...
+          </button>
+        </div>
+      </form>
+
+      <!-- Switch to login -->
+      <div class="auth-switch">
+        <span>Already have an account?</span>
+        <a (click)="switchToLogin.emit()">Login</a>
+      </div>
+    </div>
+  </div>
+</div>

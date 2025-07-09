@@ -1,0 +1,129 @@
+.login-wrapper {
+  display: flex;
+  height: 90vh;
+  width: 100%;
+  background: #f4f6f9; /* Light background */
+  color: #333;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.left-panel {
+  flex: 1;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #e3f2fd; /* light blue */
+  color: #0d47a1; /* deep blue for text */
+  text-align: center; 
+}
+
+.brand-title {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-size: 20px;
+  margin-bottom: 15px;
+  margin-top: 15px;
+  font-style: italic;
+  
+}
+
+.description {
+  font-size: 16px;
+  max-width: 450px;
+  line-height: 1.5;
+}
+
+.brand-logo {
+  max-width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+  background: transparent;
+  align-items: center;
+}
+.auth-switch {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.auth-switch a {
+  color: #0d47a1;
+  font-weight: 500;
+  margin-left: 5px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+
+.right-panel {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f6f9;
+}
+
+.login-card {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-header {
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #0d47a1;
+  text-align: center;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.btns {
+  display: flex;
+  justify-content: center;
+}
+
+.wait {
+  text-align: center;
+  margin-top: 10px;
+  color: #f57c00;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+  }
+
+  .left-panel {
+    padding: 20px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .right-panel {
+    padding: 20px;
+  }
+
+  .login-card {
+    padding: 30px 20px;
+    margin-top: 10px;
+  }
+}

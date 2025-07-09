@@ -1,0 +1,70 @@
+<div class="login-wrapper">
+  <div class="left-panel">
+    <!-- <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" /> -->
+    <h1 class="brand-title">Msquare Engineers</h1>
+    <p class="tagline">Empowering Engineers with Smart Tools</p>
+    <p class="description">
+      Track your expenses, manage leaves and stay connected with your team – all in one place.
+    </p>
+  </div>
+
+  <div class="right-panel">
+    <div class="login-card">
+      <div style="display: flex; justify-content: center;">
+              <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" />
+
+      </div>
+
+      <p class="login-header">Login</p>
+
+      <!-- 🔄 Loader displayed inside login card -->
+      <div *ngIf="LoginContinue">
+        <app-welcome-loader [msg]="msg"></app-welcome-loader>
+        <div class="wait">Please wait... Fetching details</div>
+      </div>
+
+      <form [formGroup]="loginForm" *ngIf="!LoginContinue">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" placeholder="employee@msquare.com" formControlName="gmail" />
+          <mat-error *ngIf="loginForm.get('gmail')?.hasError('required') && loginForm.get('gmail')?.touched">
+            Email is required
+          </mat-error>
+          <mat-error *ngIf="loginForm.get('gmail')?.hasError('email') && loginForm.get('gmail')?.touched">
+            Invalid Email
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" placeholder="********" formControlName="password" />
+          <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
+            Password is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>4-digit PIN</mat-label>
+          <input matInput type="password" placeholder="****" formControlName="pin" maxlength="4" />
+          <mat-error *ngIf="loginForm.get('pin')?.hasError('required') && loginForm.get('pin')?.touched">
+            PIN is required
+          </mat-error>
+          <mat-error *ngIf="loginForm.get('pin')?.hasError('pattern')">
+            PIN must be 4 digits
+          </mat-error>
+        </mat-form-field>
+
+        <div class="btns">
+          <button mat-raised-button color="primary" type="submit" (click)="onLogin()">
+            <mat-icon>login</mat-icon> Login
+          </button>
+        </div>
+      </form>
+      <div class="auth-switch">
+  <span>Don't have an account?</span>
+  <a (click)="switchToSignup.emit()">Sign Up</a>
+</div>
+
+    </div>
+  </div>
+</div>

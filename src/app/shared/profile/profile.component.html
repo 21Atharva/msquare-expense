@@ -1,0 +1,112 @@
+<div class="profile-wrapper">
+
+  <!-- Header Section -->
+  <div class="profile-header">
+    <h1>Profile</h1>
+    <!-- <p>Update your profile.</p> -->
+    <button mat-button color="warn" class="logout-btn" (click)="onLogout()">Log Out</button>
+  </div>
+
+  <!-- Profile Photo & Upload Section -->
+  <div class="avatar-section">
+    <div class="avatar">
+      <ng-container *ngIf="profilePicUrl; else initialsTemplate">
+        <img [src]="profilePicUrl" alt="Profile Picture" class="avatar-img" />
+      </ng-container>
+      <ng-template #initialsTemplate>
+        <div class="employee-avatar">{{ getInitials(employeeName) }}</div>
+      </ng-template>
+    </div>
+
+    <div class="upload-box" (click)="fileInput.click()">
+      <input 
+        type="file" 
+        #fileInput 
+        hidden 
+        accept="image/*" 
+        (change)="onFileSelected($event)" 
+      />
+      <mat-icon class="upload-icon">cloud_upload</mat-icon>
+      <p><strong>Click to upload</strong></p>
+      <span>JPG, PNG, or GIF (Recommended size: 1000x1000px)</span>
+      <div class="file-name" *ngIf="selectedFileName">
+        Selected file: {{ selectedFileName }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Personal Info Section -->
+<div class="section">
+  <h3><b>Personal Information</b></h3>
+  <!-- <p>Update your personal details here.</p> -->
+
+  <!-- Name & Username -->
+<!-- Row 1: Name and Username -->
+<div class="form-row">
+  <mat-form-field appearance="outline" class="half-width">
+    <mat-label>Full Name</mat-label>
+    <input matInput [(ngModel)]="newName" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="half-width">
+    <mat-label>Username</mat-label>
+    <input matInput [(ngModel)]="newUsername" />
+  </mat-form-field>
+</div>
+
+<!-- Row 2: Email and Role -->
+<div class="form-row">
+  <mat-form-field appearance="outline" class="half-width">
+    <mat-label>Email</mat-label>
+    <input matInput [(ngModel)]="profile.gmail" />
+  </mat-form-field>
+
+<mat-form-field appearance="outline" class="half-width readonly-field">
+  <mat-label>Role</mat-label>
+  <input matInput [(ngModel)]="profile.role" readonly />
+</mat-form-field>
+
+
+</div>
+
+<!-- Row 3: Bio (full width) -->
+<div class="form-row">
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Bio</mat-label>
+    <textarea matInput [(ngModel)]="profile.bio" rows="3"></textarea>
+  </mat-form-field>
+</div>
+<hr>
+<div class="section expense-summary">
+  <h3><b>Expense Summary</b></h3>
+  <div class="expense-cards">
+    <div class="expense-card">
+      <mat-icon class="icon">list_alt</mat-icon>
+      <div>
+        <h4>Total Expenses</h4>
+        <p>{{ expenseCount }}</p>
+      </div>
+    </div>
+
+    <div class="expense-card">
+      <mat-icon class="icon">account_balance_wallet</mat-icon>
+      <div>
+        <h4>Total Amount</h4>
+        <p>₹ {{ totalExpenseAmount }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Buttons -->
+  <div class="button-group">
+    <button mat-button (click)="cancelEdit()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="saveData()">Save</button>
+  </div>
+</div>
+
+
+<!-- Expense Summary Section -->
+
+
+
+</div>

@@ -1,0 +1,124 @@
+<mat-drawer-container
+  class="example-container"
+  hasBackdrop="True"
+  autosize
+>
+  <mat-drawer style="height: 100%" #drawer class="example-sidenav" mode="over">
+        <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" />
+
+    <h2
+      style="
+        border-bottom: 2px solid red;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      "
+    >
+     Msquare Portal
+    </h2>
+    <!-- EMPLOYEE View -->
+<div *ngIf="userRole === 'employee'">
+  <div class="side-nav-btn">
+    <button mat-raised-button color="primary" (click)="Profile()">
+      <mat-icon>perm_identity</mat-icon>Profile
+    </button>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onAdd()">
+        <mat-icon>add-chart</mat-icon>Add Expenses
+      </button>
+    </div>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLeaveApplication()">
+        <mat-icon>add</mat-icon>Leave Application
+      </button>
+    </div>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onEmpDashboard()">
+        <mat-icon>dashboard</mat-icon>Leave Dashboard
+      </button>
+    </div>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLogout()">
+        <mat-icon>logout</mat-icon>Logout
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN View -->
+<div *ngIf="userRole === 'admin'">
+  <div class="side-nav-btn">
+    <button mat-raised-button color="primary" (click)="Profile()">
+      <mat-icon>perm_identity</mat-icon>Profile
+    </button>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onAdd()">
+        <mat-icon>add-chart</mat-icon>Add Expenses
+      </button>
+    </div>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLeaveManagement()">
+        <mat-icon>add</mat-icon>Manage Employee Leaves
+      </button>
+    </div>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onAdminDashboard()">
+        <mat-icon>dashboard</mat-icon>Admin Dashboard
+      </button>
+    </div>
+
+    <div style="margin-top: 20px">
+      <button mat-raised-button color="primary" (click)="onLogout()">
+        <mat-icon>logout</mat-icon>Logout
+      </button>
+
+      <!--  -->
+    </div>
+  </div>
+</div>
+
+    <div style="font-size: 12px;margin-top: 20px;">
+      <!-- Application Version {{app_version}} -->
+    </div>
+  </mat-drawer>
+  <div>
+    <mat-toolbar style="border-bottom: 1px solid black">
+      <button
+        mat-icon-button
+        class="example-icon"
+        (click)="drawer.toggle()"
+        aria-label="Example icon-button with menu icon"
+      >
+        <mat-icon>list</mat-icon>
+      </button>
+      <span>Msquare Portal</span>
+      <span class="example-spacer"></span>
+      <button mat-raised-button color="accent" (click)="onLogout()">
+        <mat-icon>logout</mat-icon>Logout
+      </button>
+    </mat-toolbar>
+  </div>
+  <div class="mainlogin">
+    <app-view-expenses></app-view-expenses>
+  </div>
+  <!-- <div>
+    <button
+      (click)="onAdd()"
+      matTooltip="Add Expense"
+      class="btns"
+      mat-mini-fab
+      color="accent"
+    >
+      <mat-icon>add-chart</mat-icon>
+    </button>
+  </div> -->
+   <div class="footers">
+      <app-footer></app-footer>
+    </div>
+</mat-drawer-container>

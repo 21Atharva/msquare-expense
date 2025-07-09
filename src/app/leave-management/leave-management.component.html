@@ -1,0 +1,204 @@
+<mat-drawer-container class="drawer-container" autosize>
+
+  <!-- Sidebar -->
+  <mat-drawer #drawer mode="over" class="example-sidenav" style="height: 100%">
+        <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" />
+
+    <h2 style="border-bottom: 2px solid red; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      Msquare Portal
+    </h2>
+
+    <!-- Admin Sidebar -->
+    <div class="side-nav-btn" *ngIf="userRole === 'admin'">
+      <button mat-raised-button color="primary" (click)="onProfile()">
+        <mat-icon>perm_identity</mat-icon>Profile
+      </button>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="onAdd()">
+          <mat-icon>add-chart</mat-icon>Add Expenses
+        </button>
+      </div>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="onLeaveApplication()">
+          <mat-icon>add</mat-icon>Manage Employee Leaves
+        </button>
+      </div>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="onAdminDashboard()">
+          <mat-icon>dashboard</mat-icon>Admin Dashboard
+        </button>
+      </div>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="onLogout()">
+          <mat-icon>logout</mat-icon>Logout
+        </button>
+      </div>
+    </div>
+
+    <!-- Employee Sidebar -->
+    <div class="side-nav-btn" *ngIf="userRole === 'employee' || 'manager'">
+      <button mat-raised-button color="primary" (click)="onProfile()">
+        <mat-icon>perm_identity</mat-icon>Profile
+      </button>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="onAdd()">
+          <mat-icon>add-chart</mat-icon>Add Expenses
+        </button>
+      </div>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="addLeaveApplication()">
+          <mat-icon>add</mat-icon>Leave Application
+        </button>
+      </div>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="onEmpDashboard()">
+          <mat-icon>add</mat-icon>Leave Dashboard
+        </button>
+      </div>
+      <div style="margin-top: 20px">
+        <button mat-raised-button color="primary" (click)="onLogout()">
+          <mat-icon>logout</mat-icon>Logout
+        </button>
+      </div>
+    </div>
+  </mat-drawer>
+
+  <!-- Main Content -->
+  <mat-drawer-content>
+    <mat-toolbar color="primary">
+      <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span style="margin-left: 10px;">All Leave Applications</span>
+    </mat-toolbar>
+
+    <div class="admin-dashboard" style="padding: 20px;">
+
+      <!-- Statistics -->
+      <div class="stats-grid">
+        <div class="stat-card total">
+          <div class="stat-number">{{ totalCount }}</div>
+          <div class="stat-label">Total Request</div>
+        </div>
+        <div class="stat-card new">
+          <div class="stat-number">{{ approvedCount }}</div>
+          <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card rejected">
+          <div class="stat-number">{{ rejectedCount }}</div>
+          <div class="stat-label">Rejected</div>
+        </div>
+        <div class="stat-card pending">
+          <div class="stat-number">{{ pendingCount }}</div>
+          <div class="stat-label">Pending Request</div>
+        </div>
+      </div>
+
+      <!-- Leave Approval Header with Search -->
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 30px;">
+        <h2 class="section-title" style="margin: 0; display: flex; align-items: center;">
+          <span class="status-indicator"></span>
+          Leave Approval
+        </h2>
+
+        <mat-form-field appearance="outline" style="width: 300px; margin-top: 10px;">
+          <mat-label>Search Leaves</mat-label>
+          <input matInput (input)="applyFilter($event)" placeholder="Search by Name, Email, Type or Status" />
+          <button mat-icon-button matSuffix (click)="clearSearch()" *ngIf="searchQuery">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
+
+      <!-- Leave Cards -->
+      <div class="leave-cards-grid">
+        <ng-container *ngIf="pagedLeaves.length > 0; else noLeavesFound">
+          <div class="leave-card" *ngFor="let leave of pagedLeaves">
+            <div class="card-header">
+              <div class="employee-info">
+                <div class="employee-avatar">{{ getInitials(leave.employeeName) }}</div>
+                <div class="employee-details">
+                  <h3 style="word-break: break-word;">{{ leave.employeeName }}</h3>
+                  <div class="employee-id">{{ leave.emailId }}</div>
+                </div>
+              </div>
+              <div class="leave-badge">
+                <span class="material-icons" style="font-size: 14px;">schedule</span>
+                {{ leave.totalDays }}
+              </div>
+            </div>
+
+            <div class="card-content">
+              <h3 class="leave-title" [matTooltip]="leave.reason" matTooltipPosition="above">
+                {{ leave.reason.length > 25 ? (leave.reason | slice: 0:25) + '...' : leave.reason }}
+              </h3>
+
+              <div class="leave-dates">
+                {{ leave.startDate | date:'mediumDate' }}
+                <ng-container *ngIf="leave.isStartHalfDay">
+                  <small style="color: orange">Half Day ({{ leave.startHalfDayType }})</small>
+                </ng-container>
+                -
+                {{ leave.endDate | date:'mediumDate' }}
+                <ng-container *ngIf="leave.isEndHalfDay">
+                  <small style="color: orange">Half Day ({{ leave.endHalfDayType }})</small>
+                </ng-container>
+              </div>
+
+              <div class="leave-details">
+                <div class="detail-item">
+                  <span class="material-icons detail-icon">event</span>
+                  <span>{{ leave.leaveType }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="material-icons detail-icon">today</span>
+                  <span>{{ leave.totalDays }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button 
+                class="action-btn btn-deny" 
+                [ngClass]="{ 'disabled-btn': leave.status === 'Rejected' }"
+                (click)="updateStatus(leave.leaveId, 'Rejected')" 
+                [disabled]="leave.status === 'Rejected'">
+                <span class="material-icons" style="font-size: 16px;">close</span>
+                Deny
+              </button>
+
+              <button 
+                class="action-btn btn-approve" 
+                [ngClass]="{ 'disabled-btn': leave.status === 'Approved' }"
+                (click)="updateStatus(leave.leaveId, 'Approved')" 
+                [disabled]="leave.status === 'Approved'">
+                <span class="material-icons" style="font-size: 16px;">check</span>
+                Approve
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Not Found Message -->
+        <ng-template #noLeavesFound>
+          <div style="text-align: center; width: 100%; padding: 50px 0; font-size: 18px; color: #999;">
+            <mat-icon style="vertical-align: middle; font-size: 40px; color: #ccc;">search_off</mat-icon><br>
+            No results found for "<strong>{{ searchQuery }}</strong>".
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Paginator -->
+      <div class="paginator-wrapper">
+        <mat-paginator
+          [length]="dataSource.length"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[6, 12, 24]"
+          (page)="pageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>

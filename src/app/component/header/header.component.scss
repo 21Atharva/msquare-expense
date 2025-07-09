@@ -1,0 +1,25 @@
+.example-spacer {
+    flex: 1 1 auto;
+  }
+  
+  .example-sidenav-content {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .example-sidenav {
+    padding-left: 50px;
+    padding-right: 100px;
+    padding-top: 50px;
+  }
+  
+
+  
+.brand-logo {
+  max-width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+  background: transparent;
+}
