@@ -35,8 +35,8 @@
       </div>
     </div>
 
-    <!-- Employee Sidebar -->
-    <div class="side-nav-btn" *ngIf="userRole === 'employee' || 'manager'">
+    <!-- Employee/Manager Sidebar -->
+    <div class="side-nav-btn" *ngIf="userRole === 'employee' || userRole === 'manager'">
       <button mat-raised-button color="primary" (click)="onProfile()">
         <mat-icon>perm_identity</mat-icon>Profile
       </button>
@@ -72,7 +72,8 @@
       <span style="margin-left: 10px;">All Leave Applications</span>
     </mat-toolbar>
 
-    <div class="admin-dashboard" style="padding: 20px;">
+    <div class="scroll-content">
+      <div class="main-content">
 
       <!-- Statistics -->
       <div class="stats-grid">
@@ -94,8 +95,32 @@
         </div>
       </div>
 
+      <!-- Date Filter Section -->
+      <div style="padding: 20px; background-color: #f5f5f5; margin-top: 20px; margin-bottom: 20px; border-radius: 8px;">
+        <h4 style="margin: 0 0 15px 0; color: #333;">Filter Leaves by Date Range</h4>
+        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+          <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
+            <mat-label>From Date</mat-label>
+            <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" (dateChange)="onDateFilterChange()" placeholder="Select from date">
+            <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+            <mat-datepicker #fromPicker></mat-datepicker>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
+            <mat-label>To Date</mat-label>
+            <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" (dateChange)="onDateFilterChange()" placeholder="Select to date">
+            <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+            <mat-datepicker #toPicker></mat-datepicker>
+          </mat-form-field>
+          
+          <button mat-stroked-button color="warn" (click)="clearDateFilter()" style="height: 40px;">
+            <mat-icon>clear</mat-icon> Clear Date Filter
+          </button>
+        </div>
+      </div>
+
       <!-- Leave Approval Header with Search -->
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 30px;">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
         <h2 class="section-title" style="margin: 0; display: flex; align-items: center;">
           <span class="status-indicator"></span>
           Leave Approval
@@ -103,15 +128,86 @@
 
         <mat-form-field appearance="outline" style="width: 300px; margin-top: 10px;">
           <mat-label>Search Leaves</mat-label>
-          <input matInput (input)="applyFilter($event)" placeholder="Search by Name, Email, Type or Status" />
+          <input matInput (input)="applyFilter($event)" [(ngModel)]="searchQuery" placeholder="Search by Name, Email, Type or Status" />
           <button mat-icon-button matSuffix (click)="clearSearch()" *ngIf="searchQuery">
             <mat-icon>clear</mat-icon>
           </button>
         </mat-form-field>
       </div>
 
-      <!-- Leave Cards -->
-      <div class="leave-cards-grid">
+      <!-- Admin Table View -->
+      <div *ngIf="userRole === 'admin'" class="table-container">
+        <mat-card *ngIf="pagedLeaves.length > 0; else noLeavesFound">
+          <mat-card-content style="padding: 0;">
+            <table mat-table [dataSource]="pagedLeaves" class="leave-table">
+              
+              <!-- Employee Name Column -->
+              <ng-container matColumnDef="employeeName">
+                <th mat-header-cell *matHeaderCellDef>Employee Name</th>
+                <td mat-cell *matCellDef="let leave">
+                  <div class="employee-cell">
+                    <div class="employee-avatar-small">{{ getInitials(leave.employeeName) }}</div>
+                    <div class="employee-info-table">
+                      <div class="employee-name">{{ leave.employeeName }}</div>
+                      <div class="employee-email">{{ leave.emailId }}</div>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Date Range Column -->
+              <ng-container matColumnDef="dateRange">
+                <th mat-header-cell *matHeaderCellDef>Date Range</th>
+                <td mat-cell *matCellDef="let leave">
+                  <div class="date-range-cell">
+                    <div class="date-line">
+                      <strong>From:</strong> {{ leave.startDate | date:'dd MMM yyyy' }}
+                      <span *ngIf="leave.isStartHalfDay" class="half-day-badge">{{ leave.startHalfDayType }}</span>
+                    </div>
+                    <div class="date-line">
+                      <strong>To:</strong> {{ leave.endDate | date:'dd MMM yyyy' }}
+                      <span *ngIf="leave.isEndHalfDay" class="half-day-badge">{{ leave.endHalfDayType }}</span>
+                    </div>
+                    <div class="leave-type">{{ leave.leaveType }}</div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Total Days Column -->
+              <ng-container matColumnDef="totalDays">
+                <th mat-header-cell *matHeaderCellDef>Days Count</th>
+                <td mat-cell *matCellDef="let leave">
+                  <div class="days-count-cell">
+                    <span class="days-number">{{ leave.totalDays }}</span>
+                    <span class="days-label">{{ leave.totalDays === 1 ? 'Day' : 'Days' }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let leave">
+                  <span class="status-badge" 
+                        [ngClass]="{
+                          'status-approved': leave.status === 'Approved',
+                          'status-pending': leave.status === 'Pending',
+                          'status-rejected': leave.status === 'Rejected'
+                        }">
+                    {{ leave.status }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="leave-table-row"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Manager/Other Roles Card View -->
+      <div *ngIf="userRole !== 'admin'" class="leave-cards-grid">
         <ng-container *ngIf="pagedLeaves.length > 0; else noLeavesFound">
           <div class="leave-card" *ngFor="let leave of pagedLeaves">
             <div class="card-header">
@@ -178,15 +274,20 @@
             </div>
           </div>
         </ng-container>
-
-        <!-- Not Found Message -->
-        <ng-template #noLeavesFound>
-          <div style="text-align: center; width: 100%; padding: 50px 0; font-size: 18px; color: #999;">
-            <mat-icon style="vertical-align: middle; font-size: 40px; color: #ccc;">search_off</mat-icon><br>
-            No results found for "<strong>{{ searchQuery }}</strong>".
-          </div>
-        </ng-template>
       </div>
+
+      <!-- Not Found Message -->
+      <ng-template #noLeavesFound>
+        <div style="text-align: center; width: 100%; padding: 50px 0; font-size: 18px; color: #999;">
+          <mat-icon style="vertical-align: middle; font-size: 40px; color: #ccc;">search_off</mat-icon><br>
+          <span *ngIf="searchQuery; else noDataMessage">
+            No results found for "<strong>{{ searchQuery }}</strong>".
+          </span>
+          <ng-template #noDataMessage>
+            No leave applications found.
+          </ng-template>
+        </div>
+      </ng-template>
 
       <!-- Paginator -->
       <div class="paginator-wrapper">
@@ -199,6 +300,8 @@
         </mat-paginator>
       </div>
 
+
+    </div>
     </div>
   </mat-drawer-content>
 </mat-drawer-container>

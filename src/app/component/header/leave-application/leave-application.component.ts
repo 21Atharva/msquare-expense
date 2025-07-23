@@ -346,7 +346,7 @@ export class LeaveApplicationComponent implements OnInit {
   }
 
   openDialog(): void {
-    this.dialog.open(ProfileComponent, { width: '100px' });
+    this.dialog.open(ProfileComponent, { width: '600px' });
   }
 
   onView(): void {

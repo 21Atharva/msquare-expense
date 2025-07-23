@@ -83,39 +83,55 @@ export class SignupComponent implements OnInit {
   }
 
 onProceed() {
-  if (this.currentStep !== 3) return;
+  console.log('Signup button clicked!');
+  
+  if (this.currentStep !== 3) {
+    console.log('Not on final step, current step:', this.currentStep);
+    return;
+  }
 
   // Ensure form is fully synced
   this.signUpForm.updateValueAndValidity();
 
   if (this.signUpForm.invalid) {
+    console.log('Form is invalid:', this.signUpForm.errors);
+    console.log('Invalid fields:', Object.keys(this.signUpForm.controls).filter(key => 
+      this.signUpForm.get(key)?.invalid
+    ));
     this.signUpForm.markAllAsTouched();
     return;
   }
 
   this.SignUpContinue = true;
 
-  // ✅ Add log to confirm department is included
-  console.log("Payload being sent:", this.signUpForm.value);
+  const formData = this.signUpForm.getRawValue();
+  console.log("Signup payload being sent:", formData);
+  console.log('API URL will be:', 'http://localhost:3000/v1/api/USER/SIGN_UP');
 
-
-   this.authService.onSignUp(this.signUpForm.getRawValue())
-
+  this.authService.onSignUp(formData)
     .then((userRole: string) => {
+      console.log('Signup success, user role:', userRole);
       this.SignUpContinue = false;
       this.authService.saveSource(
         this.signUpForm.value.gmail,
         'signup',
         this.businessData.getComingSrc()
       );
-       this.router.navigate(['/login']);
-      // Navigate as required
+      
+      this.snackbar.open('Account created successfully! Please login.', 'Close', {
+        duration: 3000
+      });
+      
+      this.router.navigate(['/login']);
     })
     .catch((error) => {
+      console.error('Signup error:', error);
       this.SignUpContinue = false;
-      console.error(error);
-      this.snackbar.open('Signup failed. Try again.', 'Close', {
-        duration: 3000
+      
+      // Show detailed error message
+      const errorMsg = error?.error?.message || error?.message || 'Signup failed. Please check if backend server is running.';
+      this.snackbar.open(errorMsg, 'Close', {
+        duration: 5000
       });
     });
 }

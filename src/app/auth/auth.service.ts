@@ -259,4 +259,100 @@ sendOtp(
   onConfirmAccess(body: any) {
     return this.http.post(this.apiUrl + 'USER/CONFIRM_ACCESS/', body);
   }
+
+  // OTP-based login methods
+  sendOtpForLogin(email: string): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      this.http.post(this.apiUrl + 'USER/SEND_OTP', { gmail: email }).subscribe(
+        (res: any) => {
+          this._snackBar.open(res.message || 'OTP sent successfully', '', {
+            duration: 3000,
+          });
+          resolve(res);
+        },
+        (error) => {
+          console.error('Send OTP error:', error);
+          this._snackBar.open(error?.error?.message || 'Failed to send OTP', '', {
+            duration: 4000,
+          });
+          reject(error);
+        }
+      );
+    });
+  }
+
+  verifyPasswordAndSendOtp(email: string, password: string): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      this.http.post(this.apiUrl + 'USER/VERIFY_PASSWORD_AND_SEND_OTP', { 
+        gmail: email, 
+        password: password 
+      }).subscribe(
+        (res: any) => {
+          this._snackBar.open(res.message || 'Password verified, OTP sent', '', {
+            duration: 3000,
+          });
+          resolve(res);
+        },
+        (error) => {
+          console.error('Password verification error:', error);
+          this._snackBar.open(error?.error?.message || 'Invalid credentials', '', {
+            duration: 4000,
+          });
+          reject(error);
+        }
+      );
+    });
+  }
+
+  verifyOtpAndLogin(email: string, otp: string): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      this.http.post(this.apiUrl + 'USER/VERIFY_OTP_LOGIN', { gmail: email, otp }).subscribe(
+        (res: any) => {
+          const accountStatus = res?.data?.accountStatus || 'approved';
+
+          if (accountStatus !== 'approved') {
+            const statusMsg =
+              accountStatus === 'pending'
+                ? 'Your account is pending admin approval.'
+                : 'Your account has been rejected. Please contact admin.';
+            this._snackBar.open(statusMsg, '', { duration: 4000 });
+            this.isAuth = false;
+            reject({ message: statusMsg });
+            return;
+          }
+
+          this._snackBar.open(res.message || 'Login successful!', '', { duration: 3000 });
+
+          this.token = res.data.token;
+          this.userId = res.data.userId;
+          this.isAuth = true;
+
+          this.setEmail(res.data.gmail);
+          localStorage.setItem('token', res.data.token);
+          localStorage.setItem('role', res.data.role);
+          localStorage.setItem('status', res.data.accountStatus);
+          localStorage.setItem('Id', res.data.userId);
+
+          this.expireTokenTime = setTimeout(() => {
+            this.onLogout();
+          }, res.data.expiredToken * 1000);
+
+          this.saveAuthDataonLocalStorage(res.data.expiredToken, res.data.userId);
+
+          this.updateUserData(res.data.userId, {
+            lastLoginDate: res.data.latestLoginDate,
+          });
+
+          resolve(res.data);
+        },
+        (error) => {
+          this._snackBar.open(error?.error?.message || 'OTP verification failed', '', {
+            duration: 4000,
+          });
+          this.isAuth = false;
+          reject(error);
+        }
+      );
+    });
+  }
 }

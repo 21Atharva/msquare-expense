@@ -131,7 +131,9 @@ updatePagedLeaves(): void {
   }
 
   onProfile(): void{
-    this.route.navigate(['profile']);
+    this.dialog.open(ProfileComponent, {
+      width: '600px',
+    });
   }
 
   

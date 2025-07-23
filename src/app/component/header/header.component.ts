@@ -46,7 +46,7 @@ export class HeaderComponent implements OnInit {
 
   openDialog(): void {
     this.dialog.open(ProfileComponent, {
-      width: '100px',
+      width: '600px',
     });
   }
 
@@ -55,7 +55,9 @@ export class HeaderComponent implements OnInit {
   }
 
   onProfile(): void {
-    this.route.navigate(['profile']);
+    this.dialog.open(ProfileComponent, {
+      width: '600px',
+    });
   }
 
   onLogout(): void {

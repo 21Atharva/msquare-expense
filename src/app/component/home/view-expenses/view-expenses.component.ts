@@ -14,6 +14,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { HttpClient } from '@angular/common/http';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from 'src/app/auth/auth.service';
@@ -58,6 +59,12 @@ userEmail: string = '';
   pageSize = 3;
   pageIndex = 0;
 
+  // Date filter properties
+  fromDate: Date | null = null;
+  toDate: Date | null = null;
+  filteredData: ExpenseContent[] = [];
+  filteredAdminData: any[] = [];
+
   constructor(
     public businessData: BusinessDataService,
     public dialog: MatDialog,
@@ -89,6 +96,10 @@ userEmail: string = '';
     } else if (this.userRole === 'admin') {
       this.getAllExpensesForAdmin();
     }
+    
+    // Initialize filtered data
+    this.filteredData = this.ELEMENT_DATA;
+    this.filteredAdminData = this.adminData;
   }
 
   ngAfterViewInit(): void {
@@ -114,12 +125,6 @@ userEmail: string = '';
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
     this.updatePagedData();
-  }
-
-  updatePagedData() {
-    const start = this.pageIndex * this.pageSize;
-    const end = start + this.pageSize;
-    this.pagedAdminData = this.adminData.slice(start, end);
   }
 
 toBase64(url: string): Promise<string> {
@@ -181,8 +186,9 @@ async downloadAllExpensesAsPDF() {
   document.body.appendChild(wrapper);
   const tbody = wrapper.querySelector('#expense-body');
 
-  for (let i = 0; i < this.ELEMENT_DATA.length; i++) {
-    const e = this.ELEMENT_DATA[i];
+  const dataToExport = this.filteredData.length > 0 ? this.filteredData : this.ELEMENT_DATA;
+  for (let i = 0; i < dataToExport.length; i++) {
+    const e = dataToExport[i];
     const receiptUrl = e.image ? this.getImagePath(e.image) : '';
     let base64Img = '';
 
@@ -395,6 +401,98 @@ async downloadAdminExpensePDF(group: any) {
   document.body.removeChild(wrapper);
 }
 
+// Excel Download Methods
+downloadAllExpensesAsExcel() {
+  const dataToExport = this.filteredData.length > 0 ? this.filteredData : this.ELEMENT_DATA;
+  const data = dataToExport.map((expense, index) => ({
+    'S.No': index + 1,
+    'Name': expense.name,
+    'Amount (₹)': expense.amount,
+    'Date': expense.expense_date,
+    'Category': expense.expense_category,
+    'Payment Method': expense.payment,
+    'Comment': expense.comment || '-',
+    'Receipt': expense.image ? 'Available' : 'No Image'
+  }));
+
+  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+  const wb: XLSX.WorkBook = XLSX.utils.book_new();
+  
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 8 },  // S.No
+    { wch: 20 }, // Name
+    { wch: 15 }, // Amount
+    { wch: 15 }, // Date
+    { wch: 18 }, // Category
+    { wch: 18 }, // Payment Method
+    { wch: 30 }, // Comment
+    { wch: 12 }  // Receipt
+  ];
+  
+  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+  XLSX.writeFile(wb, `Expense_Report_${this.userEmail || 'User'}.xlsx`);
+}
+
+downloadSingleExpenseAsExcel(expense: ExpenseContent) {
+  const data = [{
+    'Name': expense.name,
+    'Amount (₹)': expense.amount,
+    'Date': expense.expense_date,
+    'Category': expense.expense_category,
+    'Payment Method': expense.payment,
+    'Comment': expense.comment || '-',
+    'Receipt': expense.image ? 'Available' : 'No Image'
+  }];
+
+  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+  const wb: XLSX.WorkBook = XLSX.utils.book_new();
+  
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 20 }, // Name
+    { wch: 15 }, // Amount
+    { wch: 15 }, // Date
+    { wch: 18 }, // Category
+    { wch: 18 }, // Payment Method
+    { wch: 30 }, // Comment
+    { wch: 12 }  // Receipt
+  ];
+  
+  XLSX.utils.book_append_sheet(wb, ws, 'Expense');
+  XLSX.writeFile(wb, `Expense_${expense.name}_${this.userEmail || 'User'}.xlsx`);
+}
+
+downloadAdminExpenseExcel(group: any) {
+  const data = group.expenses.map((expense: any, index: number) => ({
+    'S.No': index + 1,
+    'Name': expense.name,
+    'Amount (₹)': expense.amount,
+    'Date': expense.expense_date,
+    'Category': expense.expense_category,
+    'Payment Method': expense.payment,
+    'Comment': expense.comment || '-',
+    'Receipt': expense.image ? 'Available' : 'No Image'
+  }));
+
+  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+  const wb: XLSX.WorkBook = XLSX.utils.book_new();
+  
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 8 },  // S.No
+    { wch: 20 }, // Name
+    { wch: 15 }, // Amount
+    { wch: 15 }, // Date
+    { wch: 18 }, // Category
+    { wch: 18 }, // Payment Method
+    { wch: 30 }, // Comment
+    { wch: 12 }  // Receipt
+  ];
+  
+  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+  XLSX.writeFile(wb, `${group.gmail || 'user'}_Expenses_Report.xlsx`);
+}
 
 getFullImageUrl(path: string): string {
   const baseUrl = 'http://localhost:3000/'; // 👈 Replace with your backend server URL if different
@@ -435,6 +533,7 @@ getBase64ImageFromURL(url: string): Promise<string> {
           };
         });
 
+        this.filteredAdminData = this.adminData;
         this.updatePagedData();
 
         const allExpenses = this.adminData.flatMap((group) => group.expenses);
@@ -514,6 +613,7 @@ getBase64ImageFromURL(url: string): Promise<string> {
     this.businessData.onGetAllExpense(id).subscribe(
       (res: any) => {
         this.ELEMENT_DATA = res.data;
+        this.filteredData = this.ELEMENT_DATA;
         this.dataSource = new MatTableDataSource<ExpenseContent>(this.ELEMENT_DATA);
 
         setTimeout(() => {
@@ -647,6 +747,71 @@ getBase64ImageFromURL(url: string): Promise<string> {
 
   cate: any;
   hashMap: any = {};
+
+  // Date filter methods
+  onDateFilterChange() {
+    this.applyDateFilter();
+  }
+
+  applyDateFilter() {
+    if (this.userRole === 'employee') {
+      this.filteredData = this.filterExpensesByDate(this.ELEMENT_DATA);
+      this.dataSource.data = this.filteredData;
+    } else if (this.userRole === 'admin') {
+      this.filteredAdminData = this.adminData.map(group => ({
+        ...group,
+        expenses: this.filterExpensesByDate(group.expenses),
+        expenseCount: this.filterExpensesByDate(group.expenses).length
+      }));
+      this.updatePagedData();
+    }
+  }
+
+  filterExpensesByDate(expenses: any[]): any[] {
+    if (!this.fromDate && !this.toDate) {
+      return expenses;
+    }
+
+    return expenses.filter(expense => {
+      const expenseDate = new Date(expense.expense_date);
+      
+      // Reset time to start of day for accurate comparison
+      if (this.fromDate) {
+        const fromDate = new Date(this.fromDate);
+        fromDate.setHours(0, 0, 0, 0);
+        expenseDate.setHours(0, 0, 0, 0);
+        
+        if (this.toDate) {
+          const toDate = new Date(this.toDate);
+          toDate.setHours(23, 59, 59, 999);
+          const expenseDateEnd = new Date(expense.expense_date);
+          expenseDateEnd.setHours(23, 59, 59, 999);
+          return expenseDate >= fromDate && expenseDateEnd <= toDate;
+        } else {
+          return expenseDate >= fromDate;
+        }
+      } else if (this.toDate) {
+        const toDate = new Date(this.toDate);
+        toDate.setHours(23, 59, 59, 999);
+        expenseDate.setHours(23, 59, 59, 999);
+        return expenseDate <= toDate;
+      }
+      return true;
+    });
+  }
+
+  clearDateFilter() {
+    this.fromDate = null;
+    this.toDate = null;
+    this.applyDateFilter();
+  }
+
+  updatePagedData() {
+    const start = this.pageIndex * this.pageSize;
+    const end = start + this.pageSize;
+    const dataToPage = this.filteredAdminData.length > 0 ? this.filteredAdminData : this.adminData;
+    this.pagedAdminData = dataToPage.slice(start, end);
+  }
 }
 
 @Component({

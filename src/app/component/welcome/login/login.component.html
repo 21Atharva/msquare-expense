@@ -23,7 +23,8 @@
         <div class="wait">Please wait... Fetching details</div>
       </div>
 
-      <form [formGroup]="loginForm" *ngIf="!LoginContinue">
+      <!-- Step 1 & 2: Email and Password Input -->
+      <form [formGroup]="loginForm" *ngIf="!LoginContinue && !isPasswordVerified">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Email</mat-label>
           <input matInput type="email" placeholder="employee@msquare.com" formControlName="gmail" />
@@ -43,20 +44,46 @@
           </mat-error>
         </mat-form-field>
 
+        <div class="btns">
+          <button mat-raised-button color="primary" type="button" (click)="onVerifyPassword()">
+            <mat-icon>security</mat-icon> Verify & Send OTP
+          </button>
+        </div>
+      </form>
+
+      <!-- Step 3: OTP Verification -->
+      <form [formGroup]="loginForm" *ngIf="!LoginContinue && isPasswordVerified && isOtpSent">
+        <div class="otp-info">
+          <mat-icon color="primary">mail</mat-icon>
+          <p>We've sent a 6-digit OTP to <strong>{{ userEmail }}</strong></p>
+          <p class="timer" *ngIf="otpTimer > 0">
+            Time remaining: <strong>{{ formatTime(otpTimer) }}</strong>
+          </p>
+        </div>
+
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>4-digit PIN</mat-label>
-          <input matInput type="password" placeholder="****" formControlName="pin" maxlength="4" />
-          <mat-error *ngIf="loginForm.get('pin')?.hasError('required') && loginForm.get('pin')?.touched">
-            PIN is required
+          <mat-label>Enter 6-digit OTP</mat-label>
+          <input matInput type="text" placeholder="123456" formControlName="otp" maxlength="6" />
+          <mat-error *ngIf="loginForm.get('otp')?.hasError('required') && loginForm.get('otp')?.touched">
+            OTP is required
           </mat-error>
-          <mat-error *ngIf="loginForm.get('pin')?.hasError('pattern')">
-            PIN must be 4 digits
+          <mat-error *ngIf="loginForm.get('otp')?.hasError('pattern')">
+            OTP must be 6 digits
           </mat-error>
         </mat-form-field>
 
         <div class="btns">
-          <button mat-raised-button color="primary" type="submit" (click)="onLogin()">
-            <mat-icon>login</mat-icon> Login
+          <button mat-raised-button color="primary" type="button" (click)="onVerifyOtp()">
+            <mat-icon>verified_user</mat-icon> Verify & Login
+          </button>
+        </div>
+
+        <div class="otp-actions">
+          <button mat-button color="accent" type="button" (click)="resendOtp()" [disabled]="otpTimer > 0">
+            <mat-icon>refresh</mat-icon> Resend OTP
+          </button>
+          <button mat-button type="button" (click)="resetLogin()">
+            <mat-icon>arrow_back</mat-icon> Change Email
           </button>
         </div>
       </form>

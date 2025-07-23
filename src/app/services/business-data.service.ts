@@ -242,6 +242,16 @@ getAllEmployees() {
   return this.http.get<any>(`${this.apiUrl}USER/all-users`);
 }
 
+// Manager assignment methods
+assignEmployeeToManager(employeeId: string, managerId: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}USER/assign-manager`, {
+    employeeId,
+    managerId
+  });
+}
 
+removeManagerFromEmployee(employeeId: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}USER/remove-manager/${employeeId}`, {});
+}
 
 }

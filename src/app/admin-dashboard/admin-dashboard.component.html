@@ -147,11 +147,46 @@
               <td mat-cell *matCellDef="let emp" class="earthfit-cell email-cell">{{ emp.gmail }}</td>
             </ng-container>
 
-            <!-- Mobile Number Column -->
-            <ng-container matColumnDef="mobile">
-              <th mat-header-cell *matHeaderCellDef class="earthfit-header">Mobile Number</th>
-              <td mat-cell *matCellDef="let emp" class="earthfit-cell mobile-cell">
-                {{ emp.mobile || '+91 9876543210' }}
+            <!-- Manager Column -->
+            <ng-container matColumnDef="manager">
+              <th mat-header-cell *matHeaderCellDef class="earthfit-header">Manager</th>
+              <td mat-cell *matCellDef="let emp" class="earthfit-cell manager-cell">
+                <div class="manager-assignment" *ngIf="emp.role === 'employee'">
+                  <div *ngIf="!hasManager(emp)" class="no-manager-section">
+                    <div class="manager-select-container">
+                      <mat-form-field appearance="outline" class="compact-field">
+                        <mat-label>Assign Manager</mat-label>
+                        <mat-select [(ngModel)]="selectedManagerId" placeholder="Select Manager">
+                          <mat-option *ngFor="let manager of managers" [value]="manager._id">
+                            {{ manager.name }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <button mat-icon-button color="primary" 
+                              (click)="assignEmployeeToManager(emp, selectedManagerId)"
+                              [disabled]="!selectedManagerId"
+                              matTooltip="Assign Manager">
+                        <mat-icon>person_add</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div *ngIf="hasManager(emp)" class="assigned-manager-section">
+                    <div class="manager-info">
+                      <div class="manager-name">{{ getManagerName(emp) }}</div>
+                      <div class="manager-email">{{ emp.managerId?.gmail }}</div>
+                    </div>
+                    <button mat-icon-button color="warn" 
+                            (click)="removeManagerFromEmployee(emp)"
+                            matTooltip="Remove Manager">
+                      <mat-icon>person_remove</mat-icon>
+                    </button>
+                  </div>
+                </div>
+                
+                <div *ngIf="emp.role !== 'employee'" class="non-employee-manager">
+                  <span class="role-indicator">{{ emp.role | titlecase }}</span>
+                </div>
               </td>
             </ng-container>
 

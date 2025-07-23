@@ -17,7 +17,7 @@ export class LeaveManagementComponent implements OnInit {
   dataSource: LeaveApplication[] = [];
   originalDataSource: LeaveApplication[] = [];
   displayedColumns: string[] = [
-    'employeeName', 'leaveType', 'totalDays', 'startDate', 'endDate', 'status', 'reason', 'actions'
+    'employeeName', 'dateRange', 'totalDays', 'status'
   ];
 
   isExpanded = false;
@@ -32,6 +32,11 @@ export class LeaveManagementComponent implements OnInit {
 
   userRole = '';
   searchQuery: string = '';
+
+  // Date filter properties
+  fromDate: Date | null = null;
+  toDate: Date | null = null;
+  filteredLeaves: LeaveApplication[] = [];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -61,6 +66,7 @@ export class LeaveManagementComponent implements OnInit {
         next: (leaves) => {
           this.originalDataSource = leaves;
           this.dataSource = [...leaves];
+          this.filteredLeaves = [...leaves];
           this.updatePagedLeaves();
           this.calculateStatusCounts();
         },
@@ -85,6 +91,7 @@ export class LeaveManagementComponent implements OnInit {
             next: (leaves) => {
               this.originalDataSource = leaves;
               this.dataSource = [...leaves];
+              this.filteredLeaves = [...leaves];
               this.updatePagedLeaves();
               this.calculateStatusCounts();
             },
@@ -119,32 +126,14 @@ export class LeaveManagementComponent implements OnInit {
     this.updatePagedLeaves();
   }
 
-  getInitials(name: string): string {
-    if (!name) return '';
-    const parts = name.split(' ');
-    return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
-  }
-
   applyFilter(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
-    if (!filterValue) {
-      this.dataSource = [...this.originalDataSource];
-    } else {
-      this.dataSource = this.originalDataSource.filter(leave =>
-        leave.employeeName.toLowerCase().includes(filterValue) ||
-        leave.employeeId?.toLowerCase().includes(filterValue) ||
-        leave.leaveType.toLowerCase().includes(filterValue) ||
-        leave.status.toLowerCase().includes(filterValue)
-      );
-    }
-    this.pageIndex = 0;
-    this.updatePagedLeaves();
-    this.calculateStatusCounts();
+    this.searchQuery = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    this.applyFilters();
   }
 
   clearSearch(): void {
     this.searchQuery = '';
-    this.loadAllLeaves();
+    this.applyFilters();
   }
 
   updateStatus(leaveId: string, status: string): void {
@@ -174,7 +163,9 @@ export class LeaveManagementComponent implements OnInit {
   }
 
   onProfile(): void {
-    this.route.navigate(['profile']);
+    this.dialog.open(ProfileComponent, {
+      width: '600px',
+    });
   }
 
   onLogout(): void {
@@ -199,5 +190,84 @@ export class LeaveManagementComponent implements OnInit {
 
   onAdd(): void {
     this.businessData.onNavigate('home');
+  }
+
+  getInitials(name: string): string {
+    if (!name) return '';
+    const nameParts = name.split(' ');
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  // Date filter methods
+  onDateFilterChange(): void {
+    this.applyFilters();
+  }
+
+  clearDateFilter(): void {
+    this.fromDate = null;
+    this.toDate = null;
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filteredData = [...this.originalDataSource];
+
+    // Apply date filter
+    if (this.fromDate || this.toDate) {
+      filteredData = this.filterLeavesByDate(filteredData);
+    }
+
+    // Apply search filter
+    if (this.searchQuery) {
+      const filterValue = this.searchQuery.toLowerCase();
+      filteredData = filteredData.filter(leave =>
+        leave.employeeName.toLowerCase().includes(filterValue) ||
+        leave.employeeId?.toLowerCase().includes(filterValue) ||
+        leave.leaveType.toLowerCase().includes(filterValue) ||
+        leave.status.toLowerCase().includes(filterValue)
+      );
+    }
+
+    this.dataSource = filteredData;
+    this.pageIndex = 0;
+    this.updatePagedLeaves();
+    this.calculateStatusCounts();
+  }
+
+  filterLeavesByDate(leaves: LeaveApplication[]): LeaveApplication[] {
+    if (!this.fromDate && !this.toDate) {
+      return leaves;
+    }
+
+    return leaves.filter(leave => {
+      const leaveStartDate = new Date(leave.startDate);
+      const leaveEndDate = new Date(leave.endDate);
+      
+      // Reset time to start of day for accurate comparison
+      leaveStartDate.setHours(0, 0, 0, 0);
+      leaveEndDate.setHours(23, 59, 59, 999);
+
+      if (this.fromDate && this.toDate) {
+        const fromDate = new Date(this.fromDate);
+        const toDate = new Date(this.toDate);
+        fromDate.setHours(0, 0, 0, 0);
+        toDate.setHours(23, 59, 59, 999);
+        
+        // Check if leave period overlaps with filter date range
+        return (leaveStartDate <= toDate && leaveEndDate >= fromDate);
+      } else if (this.fromDate) {
+        const fromDate = new Date(this.fromDate);
+        fromDate.setHours(0, 0, 0, 0);
+        return leaveEndDate >= fromDate;
+      } else if (this.toDate) {
+        const toDate = new Date(this.toDate);
+        toDate.setHours(23, 59, 59, 999);
+        return leaveStartDate <= toDate;
+      }
+      return true;
+    });
   }
 }

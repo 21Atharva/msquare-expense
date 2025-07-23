@@ -243,8 +243,10 @@ router.post("/LOGIN", async (req, res) => {
 router.get('/all-users', async (req, res) => {
   try {
     const users = await UserModel.find({
-  role: { $in: ['employee', 'manager'] }
-}).select('-password -pin');
+      role: { $in: ['employee', 'manager'] }
+    })
+    .populate('managerId', 'name gmail department role')
+    .select('-password -pin');
 
     res.status(200).json({
       status: true,
@@ -338,6 +340,107 @@ router.patch('/reject/:gmail', async (req, res) => {
   }
 });
 
+// PATCH /assign-manager - Assign employee to manager
+router.patch('/assign-manager', async (req, res) => {
+  try {
+    const { employeeId, managerId } = req.body;
+
+    if (!employeeId || !managerId) {
+      return res.status(400).json({ 
+        message: 'Employee ID and Manager ID are required',
+        status: false 
+      });
+    }
+
+    // Verify employee exists and is an employee
+    const employee = await UserModel.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({ 
+        message: 'Employee not found',
+        status: false 
+      });
+    }
+
+    if (employee.role !== 'employee') {
+      return res.status(400).json({ 
+        message: 'User is not an employee',
+        status: false 
+      });
+    }
+
+    // Verify manager exists and is a manager
+    const manager = await UserModel.findById(managerId);
+    if (!manager) {
+      return res.status(404).json({ 
+        message: 'Manager not found',
+        status: false 
+      });
+    }
+
+    if (manager.role !== 'manager') {
+      return res.status(400).json({ 
+        message: 'User is not a manager',
+        status: false 
+      });
+    }
+
+    // Update employee with manager assignment
+    const updatedEmployee = await UserModel.findByIdAndUpdate(
+      employeeId,
+      { managerId: managerId },
+      { new: true }
+    ).populate('managerId', 'name gmail department');
+
+    res.status(200).json({
+      message: `Employee ${employee.name} assigned to manager ${manager.name}`,
+      data: updatedEmployee,
+      status: true
+    });
+
+  } catch (err) {
+    console.error('Error assigning manager:', err);
+    res.status(500).json({ 
+      message: 'Error assigning manager', 
+      error: err.message,
+      status: false 
+    });
+  }
+});
+
+// PATCH /remove-manager - Remove manager assignment from employee
+router.patch('/remove-manager/:employeeId', async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    const updatedEmployee = await UserModel.findByIdAndUpdate(
+      employeeId,
+      { $unset: { managerId: 1 } },
+      { new: true }
+    );
+
+    if (!updatedEmployee) {
+      return res.status(404).json({ 
+        message: 'Employee not found',
+        status: false 
+      });
+    }
+
+    res.status(200).json({
+      message: 'Manager assignment removed successfully',
+      data: updatedEmployee,
+      status: true
+    });
+
+  } catch (err) {
+    console.error('Error removing manager:', err);
+    res.status(500).json({ 
+      message: 'Error removing manager assignment', 
+      error: err.message,
+      status: false 
+    });
+  }
+});
+
 
 
 
@@ -379,68 +482,294 @@ router.get("/APP_VERSION", (req, res) => {
 
 
 
-const nodemailer = require('nodemailer');
+// 3-Step Login: Password verification + OTP sending
+router.post('/VERIFY_PASSWORD_AND_SEND_OTP', async (req, res) => {
+  const { gmail, password } = req.body;
 
-
-router.post('/SEND_OTP', async (req, res) => {
-  const { gmail, otpSender } = req.body;
-
-  if (!gmail || !otpSender?.email || !otpSender?.password) {
-    return res.status(400).json({ message: "Missing required fields" });
+  if (!gmail || !password) {
+    return res.status(400).json({ 
+      message: "Email and password are required", 
+      status: false 
+    });
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmail)) {
-    return res.status(400).json({ message: "Invalid email format" });
+    return res.status(400).json({ 
+      message: "Invalid email format", 
+      status: false 
+    });
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  const expiry = Date.now() + 5 * 60 * 1000; // 5 min
-
   try {
+    // Check if user exists and is approved
+    const user = await UserModel.findOne({ gmail });
+    
+    if (!user) {
+      return res.status(404).json({
+        message: "Invalid email or password",
+        status: false,
+      });
+    }
+
+    if (user.status === "pending") {
+      return res.status(403).json({
+        message: "Your account is pending approval. Please wait for admin approval.",
+        status: false,
+      });
+    }
+
+    if (user.status === "rejected") {
+      return res.status(403).json({
+        message: "Your account has been rejected. Contact admin for more details.",
+        status: false,
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+        status: false,
+      });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    // Check SMTP configuration
+    const smtpEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    const isDevelopment = process.env.NODE_ENV === 'development' || !smtpEmail || !smtpPassword || smtpEmail.includes('your-email');
+    
+    if (isDevelopment) {
+      // Development mode - just log OTP to console
+      console.log('='.repeat(50));
+      console.log('🔥 DEVELOPMENT MODE - 3-Step Login OTP:');
+      console.log(`📧 Email: ${gmail}`);
+      console.log(`✅ Password: Verified`);
+      console.log(`🔢 OTP: ${otp}`);
+      console.log('⏰ Valid for 5 minutes');
+      console.log('='.repeat(50));
+      
+      // Store OTP for verification
+      otpStore.set(gmail, { otp, expiry, userId: user._id });
+      
+      res.status(200).json({ 
+        message: `Password verified! OTP sent: ${otp}`, 
+        status: true,
+        developmentMode: true,
+        otp: otp // Only in development
+      });
+      return;
+    }
+
+    // Production mode - send actual email
     await sendOtpEmail({
       toEmail: gmail,
       otp,
-      senderEmail: otpSender.email,
-      senderPassword: otpSender.password,
+      senderEmail: smtpEmail,
+      senderPassword: smtpPassword,
     });
 
-    otpStore.set(gmail, { otp, expiry });
-    console.log(`OTP sent to ${gmail} using ${otpSender.email}`);
+    // Store OTP
+    otpStore.set(gmail, { otp, expiry, userId: user._id });
+    console.log(`Password verified for ${gmail}, OTP sent: ${otp}`); // Remove in production
 
-    res.status(200).json({ message: 'OTP sent successfully', status: true });
+    res.status(200).json({ 
+      message: 'Password verified! OTP sent successfully to your email', 
+      status: true 
+    });
+
   } catch (error) {
-    console.error("Error sending OTP:", error);
-    res.status(500).json({ message: "Failed to send OTP", error: error.message });
+    console.error("Error in password verification and OTP sending:", error);
+    res.status(500).json({ 
+      message: "Something went wrong. Please try again.", 
+      error: error.message,
+      status: false 
+    });
   }
 });
 
+// OTP-based Login Routes (legacy - keeping for backward compatibility)
+router.post('/SEND_OTP', async (req, res) => {
+  const { gmail } = req.body;
 
+  if (!gmail) {
+    return res.status(400).json({ 
+      message: "Email is required", 
+      status: false 
+    });
+  }
 
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmail)) {
+    return res.status(400).json({ 
+      message: "Invalid email format", 
+      status: false 
+    });
+  }
 
-router.post('/VERIFY_OTP', (req, res) => {
+  try {
+    // Check if user exists and is approved
+    const user = await UserModel.findOne({ gmail });
+    
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found with this email address",
+        status: false,
+      });
+    }
+
+    if (user.status === "pending") {
+      return res.status(403).json({
+        message: "Your account is pending approval. Please wait for admin approval.",
+        status: false,
+      });
+    }
+
+    if (user.status === "rejected") {
+      return res.status(403).json({
+        message: "Your account has been rejected. Contact admin for more details.",
+        status: false,
+      });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    // Check SMTP configuration
+    const smtpEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    const isDevelopment = process.env.NODE_ENV === 'development' || !smtpEmail || !smtpPassword || smtpEmail.includes('your-email');
+    
+    if (isDevelopment) {
+      // Development mode - just log OTP to console
+      console.log('='.repeat(50));
+      console.log('🔥 DEVELOPMENT MODE - OTP for testing:');
+      console.log(`📧 Email: ${gmail}`);
+      console.log(`🔢 OTP: ${otp}`);
+      console.log('⏰ Valid for 5 minutes');
+      console.log('='.repeat(50));
+      
+      // Store OTP for verification
+      otpStore.set(gmail, { otp, expiry, userId: user._id });
+      
+      res.status(200).json({ 
+        message: `OTP sent successfully! Check console for development OTP: ${otp}`, 
+        status: true,
+        developmentMode: true,
+        otp: otp // Only in development
+      });
+      return;
+    }
+
+    // Production mode - send actual email
+    await sendOtpEmail({
+      toEmail: gmail,
+      otp,
+      senderEmail: smtpEmail,
+      senderPassword: smtpPassword,
+    });
+
+    // Store OTP
+    otpStore.set(gmail, { otp, expiry, userId: user._id });
+    console.log(`OTP sent to ${gmail}: ${otp}`); // Remove in production
+
+    res.status(200).json({ 
+      message: 'OTP sent successfully to your email', 
+      status: true 
+    });
+
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    res.status(500).json({ 
+      message: "Failed to send OTP. Please try again.", 
+      error: error.message,
+      status: false 
+    });
+  }
+});
+
+router.post('/VERIFY_OTP_LOGIN', async (req, res) => {
   const { gmail, otp } = req.body;
 
   if (!gmail || !otp) {
-    return res.status(400).json({ message: "Email and OTP are required", status: false });
+    return res.status(400).json({ 
+      message: "Email and OTP are required", 
+      status: false 
+    });
   }
 
-  const data = otpStore.get(gmail);
+  try {
+    const data = otpStore.get(gmail);
 
-  if (!data) {
-    return res.status(400).json({ message: "No OTP found for this email", status: false });
-  }
+    if (!data) {
+      return res.status(400).json({ 
+        message: "No OTP found for this email. Please request a new OTP.", 
+        status: false 
+      });
+    }
 
-  if (Date.now() > data.expiry) {
+    if (Date.now() > data.expiry) {
+      otpStore.delete(gmail);
+      return res.status(400).json({ 
+        message: "OTP has expired. Please request a new OTP.", 
+        status: false 
+      });
+    }
+
+    if (String(data.otp) !== String(otp)) {
+      return res.status(400).json({ 
+        message: "Invalid OTP. Please try again.", 
+        status: false 
+      });
+    }
+
+    // OTP is valid, get user details
+    const user = await UserModel.findById(data.userId);
+    
+    if (!user) {
+      otpStore.delete(gmail);
+      return res.status(404).json({ 
+        message: "User not found", 
+        status: false 
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { gmail: user.gmail, userId: user._id },
+      process.env.JWT_KEY,
+      { expiresIn: '1h' }
+    );
+
+    // Clear OTP
     otpStore.delete(gmail);
-    return res.status(400).json({ message: "OTP expired", status: false });
-  }
 
-  if (String(data.otp) !== String(otp)) {
-    return res.status(400).json({ message: "Invalid OTP", status: false });
-  }
+    res.status(200).json({
+      message: "Login successful!",
+      data: {
+        token,
+        latestLoginDate: new Date(),
+        gmail: user.gmail,
+        userId: user._id,
+        role: user.role,
+        expiredToken: 3600,
+        accountStatus: user.status,
+      },
+      status: true,
+    });
 
-  otpStore.delete(gmail);
-  res.status(200).json({ message: "OTP verified successfully", status: true });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    res.status(500).json({ 
+      message: "Something went wrong during verification", 
+      status: false,
+      error: error.message 
+    });
+  }
 });
 
 

@@ -15,6 +15,13 @@ export interface Employee {
   role?: string;
   mobile?: string;
   id?: string;
+  _id?: string;
+  managerId?: {
+    _id: string;
+    name: string;
+    gmail: string;
+    department: string;
+  };
 }
 
 export interface LeaveApplication {
@@ -55,9 +62,13 @@ export class AdminDashboardComponent implements OnInit {
   allEmpPageSize = 5;
 
   // Table columns for EarthFit style
-  earthfitColumns: string[] = ['srNo', 'userId', 'name', 'userRole', 'gmail', 'status', 'action'];
+  earthfitColumns: string[] = ['srNo', 'userId', 'name', 'userRole', 'gmail', 'manager', 'status', 'action'];
   displayedColumns: string[] = ['sr', 'name', 'gmail', 'status', 'action'];
 
+  // Manager assignment properties
+  managers: Employee[] = [];
+  selectedManagerId: string = '';
+  
   // Make Math available in template
   Math = Math;
 
@@ -73,6 +84,7 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.fetchPendingEmployees();
     this.fetchAllEmployees();
+    this.fetchManagers();
   }
 
   // Fetch Pending Employees
@@ -268,7 +280,9 @@ export class AdminDashboardComponent implements OnInit {
 
   // Navigation methods
   onProfile(): void {
-    this.route.navigate(['profile']);
+    this.dialog.open(ProfileComponent, {
+      width: '600px',
+    });
   }
 
   onLogout(): void {
@@ -353,5 +367,92 @@ export class AdminDashboardComponent implements OnInit {
   onBulkReject(): void {
     console.log('Bulk reject clicked');
     // Add your bulk reject logic here
+  }
+
+  // Fetch all managers
+  fetchManagers(): void {
+    this.businessData.getManagers().subscribe({
+      next: (res: any) => {
+        this.managers = res.data || [];
+      },
+      error: (err) => {
+        console.error('Error fetching managers:', err);
+        this.showErrorMessage('Error fetching managers');
+      }
+    });
+  }
+
+  // Assign employee to manager
+  assignEmployeeToManager(employee: Employee, managerId: string): void {
+    if (!managerId || !employee._id) {
+      this.showErrorMessage('Please select a manager');
+      return;
+    }
+
+    this.businessData.assignEmployeeToManager(employee._id, managerId).subscribe({
+      next: (res: any) => {
+        if (res.status) {
+          // Update the employee in the local arrays
+          const updatedEmployee = res.data;
+          this.updateEmployeeInArrays(updatedEmployee);
+          this.showSuccessMessage(`${employee.name} assigned to manager successfully`);
+        }
+      },
+      error: (err) => {
+        console.error('Error assigning manager:', err);
+        this.showErrorMessage('Error assigning manager to employee');
+      }
+    });
+  }
+
+  // Remove manager from employee
+  removeManagerFromEmployee(employee: Employee): void {
+    if (!employee._id) {
+      this.showErrorMessage('Invalid employee data');
+      return;
+    }
+
+    this.businessData.removeManagerFromEmployee(employee._id).subscribe({
+      next: (res: any) => {
+        if (res.status) {
+          // Update the employee in the local arrays
+          const updatedEmployee = res.data;
+          this.updateEmployeeInArrays(updatedEmployee);
+          this.showSuccessMessage(`Manager removed from ${employee.name} successfully`);
+        }
+      },
+      error: (err) => {
+        console.error('Error removing manager:', err);
+        this.showErrorMessage('Error removing manager from employee');
+      }
+    });
+  }
+
+  // Helper method to update employee in all arrays
+  private updateEmployeeInArrays(updatedEmployee: Employee): void {
+    // Update in allEmployees
+    const allEmpIndex = this.allEmployees.findIndex(emp => emp._id === updatedEmployee._id);
+    if (allEmpIndex !== -1) {
+      this.allEmployees[allEmpIndex] = updatedEmployee;
+    }
+
+    // Update in filteredAllEmployees
+    const filteredEmpIndex = this.filteredAllEmployees.findIndex(emp => emp._id === updatedEmployee._id);
+    if (filteredEmpIndex !== -1) {
+      this.filteredAllEmployees[filteredEmpIndex] = updatedEmployee;
+    }
+
+    // Update paginated employees
+    this.updatePaginatedAllEmployees();
+  }
+
+  // Get manager name for display
+  getManagerName(employee: Employee): string {
+    return employee.managerId ? employee.managerId.name : 'Not Assigned';
+  }
+
+  // Check if employee has manager
+  hasManager(employee: Employee): boolean {
+    return !!employee.managerId;
   }
 }
