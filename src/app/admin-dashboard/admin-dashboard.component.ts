@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { BusinessDataService } from 'src/app/services/business-data.service';
 import { AlertBoxComponent } from 'src/app/shared/alert-box/alert-box.component';
 import { ProfileComponent } from '../shared/profile/profile.component';
+import { LayoutConfig } from 'src/app/shared/layout/layout.interface';
 
 export interface Employee {
   name: string;
@@ -20,8 +21,8 @@ export interface Employee {
     _id: string;
     name: string;
     gmail: string;
-    department: string;
   };
+  selectedManagerId?: string; // Add this for tracking individual manager selections
 }
 
 export interface LeaveApplication {
@@ -47,6 +48,8 @@ export interface LeaveApplication {
   styleUrls: ['./admin-dashboard.component.scss']
 })
 export class AdminDashboardComponent implements OnInit {
+  layoutConfig!: LayoutConfig;
+  
   // Pending Employees
   pendingEmployees: Employee[] = [];
   paginatedEmployees: Employee[] = [];
@@ -59,15 +62,17 @@ export class AdminDashboardComponent implements OnInit {
   filteredAllEmployees: Employee[] = [];
   paginatedAllEmployees: Employee[] = [];
   allEmpPageIndex = 0;
-  allEmpPageSize = 5;
+  allEmpPageSize = 10;
 
-  // Table columns for EarthFit style
-  earthfitColumns: string[] = ['srNo', 'userId', 'name', 'userRole', 'gmail', 'manager', 'status', 'action'];
+  // Table columns for different sections
+  earthfitColumns: string[] = ['srNo', 'name', 'userRole', 'gmail', 'manager', 'status', 'action'];
+  pendingColumns: string[] = ['srNo', 'name', 'userRole', 'gmail', 'status', 'action'];
   displayedColumns: string[] = ['sr', 'name', 'gmail', 'status', 'action'];
 
   // Manager assignment properties
   managers: Employee[] = [];
-  selectedManagerId: string = '';
+
+
   
   // Make Math available in template
   Math = Math;
@@ -78,13 +83,15 @@ export class AdminDashboardComponent implements OnInit {
     public dialog: MatDialog,
     private route: Router,
     private snackBar: MatSnackBar,
-    private businessData: BusinessDataService
+    private businessData: BusinessDataService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.fetchPendingEmployees();
     this.fetchAllEmployees();
     this.fetchManagers();
+    this.setupLayoutConfig();
   }
 
   // Fetch Pending Employees
@@ -94,6 +101,8 @@ export class AdminDashboardComponent implements OnInit {
         const all = res.data || [];
         // ✅ Reset before filtering
         this.pendingEmployees = all.filter((e: any) => e.status === 'pending');
+        // Initialize filtered employees with all pending employees
+        this.filteredEmployees = [...this.pendingEmployees];
         this.pendingPageIndex = 0; // optional: reset pagination
         this.updatePaginatedEmployees();
       },
@@ -107,7 +116,7 @@ export class AdminDashboardComponent implements OnInit {
   updatePaginatedEmployees() {
     const start = this.pendingPageIndex * this.pendingPageSize;
     const end = start + this.pendingPageSize;
-    this.paginatedEmployees = this.pendingEmployees.slice(start, end);
+    this.paginatedEmployees = this.filteredEmployees.slice(start, end);
   }
 
   pageChangePending(event: PageEvent) {
@@ -150,14 +159,14 @@ export class AdminDashboardComponent implements OnInit {
     this.updatePaginatedAllEmployees();
   }
 
-  // Search/Filter functionality
+    // Search/Filter functionality
   applyAllEmployeeFilter(event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
     
     if (!filterValue) {
       this.filteredAllEmployees = [...this.allEmployees];
     } else {
-      this.filteredAllEmployees = this.allEmployees.filter(emp =>
+      this.filteredAllEmployees = this.allEmployees.filter(emp => 
         emp.name.toLowerCase().includes(filterValue) || 
         emp.gmail.toLowerCase().includes(filterValue)
       );
@@ -167,30 +176,94 @@ export class AdminDashboardComponent implements OnInit {
     this.updatePaginatedAllEmployees();
   }
 
+  // Helper method to reapply current search filter
+  reapplyCurrentFilter(): void {
+    // Get current search input value
+    const searchInput = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+    if (searchInput) {
+      const filterValue = searchInput.value.trim().toLowerCase();
+      
+      if (!filterValue) {
+        this.filteredAllEmployees = [...this.allEmployees];
+      } else {
+        this.filteredAllEmployees = this.allEmployees.filter(emp => 
+          emp.name.toLowerCase().includes(filterValue) || 
+          emp.gmail.toLowerCase().includes(filterValue)
+        );
+      }
+    } else {
+      // No filter applied, show all employees
+      this.filteredAllEmployees = [...this.allEmployees];
+    }
+  }
+
+  // Pending Employees Search/Filter functionality
+  applyPendingEmployeeFilter(event: Event): void {
+    const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    
+    if (!filterValue) {
+      this.filteredEmployees = [...this.pendingEmployees];
+    } else {
+      this.filteredEmployees = this.pendingEmployees.filter(emp => 
+        emp.name.toLowerCase().includes(filterValue) || 
+        emp.gmail.toLowerCase().includes(filterValue)
+      );
+    }
+    
+    this.pendingPageIndex = 0;
+    this.updatePaginatedEmployees();
+  }
+
   // Employee approval/rejection
   approveEmployee(gmail: string) {
     this.businessData.approveEmployeeByGmail(gmail).subscribe({
       next: () => {
-        // Update pending employees list
-        const pendingEmp = this.pendingEmployees.find(e => e.gmail === gmail);
-        if (pendingEmp) {
-          pendingEmp.status = 'approved';
+        // Find the employee in pending list
+        const pendingEmpIndex = this.pendingEmployees.findIndex(e => e.gmail === gmail);
+        let approvedEmployee = null;
+
+        if (pendingEmpIndex !== -1) {
+          // Get the employee before removing
+          approvedEmployee = { ...this.pendingEmployees[pendingEmpIndex] };
+          approvedEmployee.status = 'approved';
+
+          // Remove from pending employees
+          this.pendingEmployees.splice(pendingEmpIndex, 1);
+          
+          // Update filtered employees (remove from pending)
+          const filteredIndex = this.filteredEmployees.findIndex(e => e.gmail === gmail);
+          if (filteredIndex !== -1) {
+            this.filteredEmployees.splice(filteredIndex, 1);
+          }
         }
 
-        // Update all employees list
-        const allEmp = this.allEmployees.find(e => e.gmail === gmail);
-        if (allEmp) {
-          allEmp.status = 'approved';
+        // Check if employee exists in all employees, if not add them
+        const allEmpIndex = this.allEmployees.findIndex(e => e.gmail === gmail);
+        if (allEmpIndex !== -1) {
+          // Update existing employee status
+          this.allEmployees[allEmpIndex].status = 'approved';
+        } else if (approvedEmployee) {
+          // Add the approved employee to all employees list
+          this.allEmployees.push(approvedEmployee);
         }
 
-        // Update filtered list
-        const filteredEmp = this.filteredAllEmployees.find(e => e.gmail === gmail);
-        if (filteredEmp) {
-          filteredEmp.status = 'approved';
-        }
+        // Reapply current search filter to include the newly approved employee
+        this.reapplyCurrentFilter();
 
+        // Reset pagination to show the newly approved employee
+        this.allEmpPageIndex = 0;
+
+        // Update both paginated lists
         this.updatePaginatedEmployees();
         this.updatePaginatedAllEmployees();
+        
+        // Force change detection to update the UI immediately
+        this.cdr.detectChanges();
+        
+        console.log('Employee approved and added to all employees:', approvedEmployee);
+        console.log('Total all employees count:', this.allEmployees.length);
+        console.log('Filtered all employees count:', this.filteredAllEmployees.length);
+        
         this.showSuccessMessage('Employee approved successfully');
       },
       error: () => {
@@ -202,26 +275,52 @@ export class AdminDashboardComponent implements OnInit {
   rejectEmployee(gmail: string) {
     this.businessData.rejectEmployeeByGmail(gmail).subscribe({
       next: () => {
-        // Update pending employees list
-        const pendingEmp = this.pendingEmployees.find(e => e.gmail === gmail);
-        if (pendingEmp) {
-          pendingEmp.status = 'rejected';
+        // Find the employee in pending list
+        const pendingEmpIndex = this.pendingEmployees.findIndex(e => e.gmail === gmail);
+        let rejectedEmployee = null;
+
+        if (pendingEmpIndex !== -1) {
+          // Get the employee before removing
+          rejectedEmployee = { ...this.pendingEmployees[pendingEmpIndex] };
+          rejectedEmployee.status = 'rejected';
+
+          // Remove from pending employees
+          this.pendingEmployees.splice(pendingEmpIndex, 1);
+          
+          // Update filtered employees (remove from pending)
+          const filteredIndex = this.filteredEmployees.findIndex(e => e.gmail === gmail);
+          if (filteredIndex !== -1) {
+            this.filteredEmployees.splice(filteredIndex, 1);
+          }
         }
 
-        // Update all employees list
-        const allEmp = this.allEmployees.find(e => e.gmail === gmail);
-        if (allEmp) {
-          allEmp.status = 'rejected';
+        // Check if employee exists in all employees, if not add them
+        const allEmpIndex = this.allEmployees.findIndex(e => e.gmail === gmail);
+        if (allEmpIndex !== -1) {
+          // Update existing employee status
+          this.allEmployees[allEmpIndex].status = 'rejected';
+        } else if (rejectedEmployee) {
+          // Add the rejected employee to all employees list
+          this.allEmployees.push(rejectedEmployee);
         }
 
-        // Update filtered list
-        const filteredEmp = this.filteredAllEmployees.find(e => e.gmail === gmail);
-        if (filteredEmp) {
-          filteredEmp.status = 'rejected';
-        }
+        // Reapply current search filter to include the newly rejected employee
+        this.reapplyCurrentFilter();
 
+        // Reset pagination to show the newly rejected employee
+        this.allEmpPageIndex = 0;
+
+        // Update both paginated lists
         this.updatePaginatedEmployees();
         this.updatePaginatedAllEmployees();
+        
+        // Force change detection to update the UI immediately
+        this.cdr.detectChanges();
+        
+        console.log('Employee rejected and added to all employees:', rejectedEmployee);
+        console.log('Total all employees count:', this.allEmployees.length);
+        console.log('Filtered all employees count:', this.filteredAllEmployees.length);
+        
         this.showSuccessMessage('Employee rejected successfully');
       },
       error: () => {
@@ -301,6 +400,18 @@ export class AdminDashboardComponent implements OnInit {
 
   onAdd() {
     this.businessData.onNavigate('home');
+  }
+
+  onView(): void {
+    this.businessData.onNavigate('dashboard');
+  }
+
+  onLeaveManagement(): void {
+    this.businessData.onNavigate('leave-management');
+  }
+
+  onPendingApprovals(): void {
+    this.businessData.onNavigate('pending-approvals');
   }
 
   // New method for adding new user
@@ -395,6 +506,8 @@ export class AdminDashboardComponent implements OnInit {
           // Update the employee in the local arrays
           const updatedEmployee = res.data;
           this.updateEmployeeInArrays(updatedEmployee);
+          // Clear the selected manager ID after successful assignment
+          employee.selectedManagerId = '';
           this.showSuccessMessage(`${employee.name} assigned to manager successfully`);
         }
       },
@@ -455,4 +568,60 @@ export class AdminDashboardComponent implements OnInit {
   hasManager(employee: Employee): boolean {
     return !!employee.managerId;
   }
+
+  private setupLayoutConfig() {
+    const userRole = localStorage.getItem('role') || 'admin';
+    
+    const employeeNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const adminNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Pending Approvals', icon: 'approval', action: () => this.onPendingApprovals(), isActive: () => false },
+      { label: 'Employee Leaves', icon: 'assignment', action: () => this.onLeaveApplication(), isActive: () => false },
+      { label: 'Admin Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => true },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const managerNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => false },
+      { label: 'Manage Employee Leaves', icon: 'assignment', action: () => this.onLeaveManagement(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    let navigationItems;
+    if (userRole === 'admin') {
+      navigationItems = adminNavigationItems;
+    } else if (userRole === 'manager') {
+      navigationItems = managerNavigationItems;
+    } else {
+      navigationItems = employeeNavigationItems;
+    }
+
+    this.layoutConfig = {
+      title: 'Msquare Portal',
+      logoPath: '../../../../assets/image/msquare.png',
+      navigationItems: navigationItems,
+      userRole: userRole
+    };
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'N/A';
+    return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('').substring(0, 2);
+  }
+
+
 }

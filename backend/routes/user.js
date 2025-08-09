@@ -43,7 +43,6 @@ router.post("/SIGN_UP", async (req, res) => {
       userFirstSignUp: req.body.userFirstSignUp || new Date(),
       category: req.body.category || [],
       role: req.body.role || 'employee',
-      department: req.body.department || '',
       status: 'pending', // 👈 mark account as pending by default
     });
 
@@ -67,7 +66,6 @@ router.post("/SIGN_UP", async (req, res) => {
         expiredToken: 3600,
         userId: result._id,
         role: result.role,
-        department: result.department,
         accountStatus: result.status,
       },
     });
@@ -165,17 +163,34 @@ router.post("/SIGN_UP", async (req, res) => {
 
 router.post("/LOGIN", async (req, res) => {
   try {
+    console.log('🔍 LOGIN DEBUG - Request body:', {
+      gmail: req.body.gmail,
+      password: req.body.password ? `[${req.body.password.length} chars]` : 'MISSING',
+      pin: req.body.pin ? `[${req.body.pin.length} chars]` : 'MISSING',
+      allKeys: Object.keys(req.body)
+    });
+
     const user = await UserModel.findOne({ gmail: req.body.gmail });
 
     if (!user) {
+      console.log('❌ LOGIN - User not found for email:', req.body.gmail);
       return res.status(401).json({
         message: "Invalid Email Address",
         status: false,
       });
     }
 
+    console.log('✅ LOGIN - User found:', {
+      email: user.gmail,
+      status: user.status,
+      role: user.role,
+      hasPassword: !!user.password,
+      hasPin: !!user.pin
+    });
+
     // ✅ Restrict if account status is not 'approved'
     if (user.status === "pending") {
+      console.log('❌ LOGIN - Account pending approval');
       return res.status(403).json({
         message: `Your account is pending. Please wait for admin approval...`,
         status: false,
@@ -183,16 +198,20 @@ router.post("/LOGIN", async (req, res) => {
     }
 
     if (user.status === "rejected") {
+      console.log('❌ LOGIN - Account rejected');
       return res.status(403).json({
         message: `Your account is rejected. Contact admin for more details.`,
         status: false,
       });
     }
 
-
     // ✅ Validate password
+    console.log('🔍 LOGIN - Validating password...');
     const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
+    console.log('🔍 LOGIN - Password validation result:', isPasswordValid);
+    
     if (!isPasswordValid) {
+      console.log('❌ LOGIN - Password validation failed');
       return res.status(401).json({
         message: "Invalid Email Address or Password",
         status: false,
@@ -200,8 +219,20 @@ router.post("/LOGIN", async (req, res) => {
     }
 
     // ✅ Validate 4-digit PIN
+    console.log('🔍 LOGIN - Validating PIN...');
+    if (!req.body.pin) {
+      console.log('❌ LOGIN - PIN not provided in request');
+      return res.status(401).json({
+        message: "PIN is required for login",
+        status: false,
+      });
+    }
+    
     const isPinValid = await bcrypt.compare(req.body.pin, user.pin);
+    console.log('🔍 LOGIN - PIN validation result:', isPinValid);
+    
     if (!isPinValid) {
+      console.log('❌ LOGIN - PIN validation failed');
       return res.status(401).json({
         message: "Incorrect 4-digit PIN",
         status: false,
@@ -245,7 +276,7 @@ router.get('/all-users', async (req, res) => {
     const users = await UserModel.find({
       role: { $in: ['employee', 'manager'] }
     })
-    .populate('managerId', 'name gmail department role')
+    .populate('managerId', 'name gmail role')
     .select('-password -pin');
 
     res.status(200).json({
@@ -262,10 +293,32 @@ router.get('/all-users', async (req, res) => {
   }
 });
 
+// GET /admin/all-users - Shows ALL users including admins
+router.get('/admin/all-users', async (req, res) => {
+  try {
+    const users = await UserModel.find({})
+    .select('-password -pin')
+    .sort({ userFirstSignUp: -1 }); // newest first
+
+    res.status(200).json({
+      status: true,
+      message: 'All users fetched successfully',
+      data: users,
+      count: users.length
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: 'Error fetching users',
+      error: err.message,
+    });
+  }
+});
+
 router.get('/managers', async (req, res) => {
   try {
     const managers = await UserModel.find({ role: 'manager' })
-      .select('name username gmail department role'); // ✅ include department here
+      .select('name username gmail role');
 
     res.status(200).json({ data: managers });
   } catch (err) {
@@ -274,19 +327,7 @@ router.get('/managers', async (req, res) => {
   }
 });
 
-// Route: GET /employees/by-department?department=Design
-router.get('/employees/by-department', async (req, res) => {
-  try {
-    const { department } = req.query;
-    if (!department) return res.status(400).json({ message: 'Department is required' });
 
-    const employees = await UserModel.find({ role: 'employee', department });
-    res.status(200).json({ data: employees });
-  } catch (err) {
-    console.error('Error fetching employees:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
 
 
 // GET all pending employees
@@ -389,7 +430,7 @@ router.patch('/assign-manager', async (req, res) => {
       employeeId,
       { managerId: managerId },
       { new: true }
-    ).populate('managerId', 'name gmail department');
+    ).populate('managerId', 'name gmail');
 
     res.status(200).json({
       message: `Employee ${employee.name} assigned to manager ${manager.name}`,
@@ -486,7 +527,14 @@ router.get("/APP_VERSION", (req, res) => {
 router.post('/VERIFY_PASSWORD_AND_SEND_OTP', async (req, res) => {
   const { gmail, password } = req.body;
 
+  console.log('🔍 OTP LOGIN DEBUG - Request body:', {
+    gmail: gmail,
+    password: password ? `[${password.length} chars]` : 'MISSING',
+    allKeys: Object.keys(req.body)
+  });
+
   if (!gmail || !password) {
+    console.log('❌ OTP LOGIN - Missing email or password');
     return res.status(400).json({ 
       message: "Email and password are required", 
       status: false 
@@ -494,6 +542,7 @@ router.post('/VERIFY_PASSWORD_AND_SEND_OTP', async (req, res) => {
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmail)) {
+    console.log('❌ OTP LOGIN - Invalid email format:', gmail);
     return res.status(400).json({ 
       message: "Invalid email format", 
       status: false 
@@ -505,13 +554,23 @@ router.post('/VERIFY_PASSWORD_AND_SEND_OTP', async (req, res) => {
     const user = await UserModel.findOne({ gmail });
     
     if (!user) {
+      console.log('❌ OTP LOGIN - User not found for email:', gmail);
       return res.status(404).json({
         message: "Invalid email or password",
         status: false,
       });
     }
 
+    console.log('✅ OTP LOGIN - User found:', {
+      email: user.gmail,
+      status: user.status,
+      role: user.role,
+      hasPassword: !!user.password,
+      passwordHashLength: user.password ? user.password.length : 0
+    });
+
     if (user.status === "pending") {
+      console.log('❌ OTP LOGIN - Account pending approval');
       return res.status(403).json({
         message: "Your account is pending approval. Please wait for admin approval.",
         status: false,
@@ -519,6 +578,7 @@ router.post('/VERIFY_PASSWORD_AND_SEND_OTP', async (req, res) => {
     }
 
     if (user.status === "rejected") {
+      console.log('❌ OTP LOGIN - Account rejected');
       return res.status(403).json({
         message: "Your account has been rejected. Contact admin for more details.",
         status: false,
@@ -526,13 +586,22 @@ router.post('/VERIFY_PASSWORD_AND_SEND_OTP', async (req, res) => {
     }
 
     // Verify password
+    console.log('🔍 OTP LOGIN - Attempting password validation...');
+    console.log('🔍 OTP LOGIN - Input password length:', password.length);
+    console.log('🔍 OTP LOGIN - Stored hash length:', user.password.length);
+    
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log('🔍 OTP LOGIN - Password validation result:', isPasswordValid);
+    
     if (!isPasswordValid) {
+      console.log('❌ OTP LOGIN - Password validation failed');
       return res.status(401).json({
         message: "Invalid email or password",
         status: false,
       });
     }
+
+    console.log('✅ OTP LOGIN - Password validated successfully');
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);

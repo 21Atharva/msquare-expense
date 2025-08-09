@@ -30,6 +30,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   ) {}
   @Output() switchToSignup = new EventEmitter<void>();
 
+
+
   ngOnInit(): void {
     // Get role from query param (?role=admin)
     this.route.queryParams.subscribe((params) => {

@@ -23,6 +23,7 @@
   display: flex;
   gap: 40px;
   align-items: center;
+  justify-content: center;
   margin-bottom: 32px;
   flex-wrap: wrap;
 }
@@ -73,6 +74,12 @@
 
 .section {
   margin-top: 32px;
+  text-align: center;
+}
+
+.section h3 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .form-row {
@@ -80,6 +87,8 @@
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 16px;
+  justify-content: center;
+  align-items: center;
 }
 
 .half-width {
@@ -103,10 +112,33 @@
   color: #333; /* Optional: ensure it's readable */
 }
 
+// Center text in all input fields and textareas
+mat-form-field input,
+mat-form-field textarea {
+  text-align: left !important;
+}
+
+// Style the labels to make them left-aligned and bold with margin-top
+mat-form-field {
+  margin-top: 10px !important;
+}
+
+mat-form-field mat-label {
+  text-align: left !important;
+  font-weight: bold !important;
+  color: #333 !important;
+  font-size: 14px !important;
+}
+
+// Left align the floating label when focused
+mat-form-field.mat-focused mat-label {
+  text-align: left !important;
+}
+
 
 .button-group {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
   margin-top: 20px;
 }
@@ -149,11 +181,13 @@
 
 .expense-summary {
   margin-top: 30px;
+  text-align: center;
 
   .expense-cards {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
+    justify-content: center;
   }
 
   .expense-card {

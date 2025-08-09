@@ -6,6 +6,8 @@ export interface ExpenseContent {
     expense_category: string,
     payment: string,
      image?: string; 
-    comment: string
+    comment: string,
+    projectId?: string,
+    projectName?: string
   }
   

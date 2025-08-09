@@ -7,6 +7,7 @@ import { BusinessDataService } from 'src/app/services/business-data.service';
 import { AlertBoxComponent } from 'src/app/shared/alert-box/alert-box.component';
 import { LeaveApplication } from '../admin-dashboard/admin-dashboard.component';
 import { ProfileComponent } from '../shared/profile/profile.component';
+import { LayoutConfig } from 'src/app/shared/layout/layout.interface';
 
 @Component({
   selector: 'app-leave-management',
@@ -14,10 +15,11 @@ import { ProfileComponent } from '../shared/profile/profile.component';
   styleUrls: ['./leave-management.component.scss']
 })
 export class LeaveManagementComponent implements OnInit {
+  layoutConfig!: LayoutConfig;
   dataSource: LeaveApplication[] = [];
   originalDataSource: LeaveApplication[] = [];
   displayedColumns: string[] = [
-    'employeeName', 'dateRange', 'totalDays', 'status'
+    'employeeName', 'dateRange', 'totalDays', 'remainingLeaves', 'status'
   ];
 
   isExpanded = false;
@@ -26,7 +28,8 @@ export class LeaveManagementComponent implements OnInit {
   approvedCount = 0;
   rejectedCount = 0;
 
-  pageSize = 6;
+  // Updated pagination settings
+  pageSize = 10; // Changed from 6 to 10
   pageIndex = 0;
   pagedLeaves: LeaveApplication[] = [];
 
@@ -37,6 +40,9 @@ export class LeaveManagementComponent implements OnInit {
   fromDate: Date | null = null;
   toDate: Date | null = null;
   filteredLeaves: LeaveApplication[] = [];
+
+  // Search and filter state
+  searchText: string = '';
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -49,6 +55,7 @@ export class LeaveManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.userRole = localStorage.getItem('role') || '';
+    this.setupLayoutConfig();
     this.loadAllLeaves();
   }
 
@@ -79,39 +86,45 @@ export class LeaveManagementComponent implements OnInit {
         }
       });
     } else if (userRole === 'manager') {
-      this.businessData.getUserById(userId).subscribe({
-        next: (user: any) => {
-          const department = (user?.department || '').trim();
-          if (!department) {
-            console.error('Department not found for manager.');
-            return;
-          }
-
-          this.businessData.getLeavesByDepartment(department).subscribe({
-            next: (leaves) => {
-              this.originalDataSource = leaves;
-              this.dataSource = [...leaves];
-              this.filteredLeaves = [...leaves];
-              this.updatePagedLeaves();
-              this.calculateStatusCounts();
-            },
-            error: (error) => {
-              console.error('Error loading leaves by department:', error);
-            }
-          });
+      // Since departments are removed, managers can see all leave applications
+      this.businessData.getLeavesByManager(userId).subscribe({
+        next: (response: any) => {
+          const leaves = response.data || response;
+          this.originalDataSource = leaves;
+          this.dataSource = [...leaves];
+          this.filteredLeaves = [...leaves];
+          this.updatePagedLeaves();
+          this.calculateStatusCounts();
         },
-        error: (err) => {
-          console.error('Error fetching manager data:', err);
+        error: (error) => {
+          console.error('Error loading leaves for manager:', error);
         }
       });
     }
   }
 
   calculateStatusCounts(): void {
-    this.pendingCount = this.dataSource.filter(leave => leave.status?.toLowerCase() === 'pending').length;
-    this.approvedCount = this.dataSource.filter(leave => leave.status?.toLowerCase() === 'approved').length;
-    this.rejectedCount = this.dataSource.filter(leave => leave.status?.toLowerCase() === 'rejected').length;
-    this.totalCount = this.pendingCount + this.approvedCount + this.rejectedCount;
+    // Always calculate counts from originalDataSource to show total statistics regardless of filters
+    console.log('Calculating status counts from:', this.originalDataSource);
+    
+    this.pendingCount = this.originalDataSource.filter(leave => {
+      const status = leave.status?.toLowerCase();
+      return status === 'pending';
+    }).length;
+    
+    this.approvedCount = this.originalDataSource.filter(leave => {
+      const status = leave.status?.toLowerCase();
+      return status === 'approved';
+    }).length;
+    
+    this.rejectedCount = this.originalDataSource.filter(leave => {
+      const status = leave.status?.toLowerCase();
+      return status === 'rejected';
+    }).length;
+    
+    this.totalCount = this.originalDataSource.length;
+    
+    console.log('Status counts - Total:', this.totalCount, 'Pending:', this.pendingCount, 'Approved:', this.approvedCount, 'Rejected:', this.rejectedCount);
   }
 
   updatePagedLeaves(): void {
@@ -126,12 +139,21 @@ export class LeaveManagementComponent implements OnInit {
     this.updatePagedLeaves();
   }
 
-  applyFilter(event: Event): void {
-    this.searchQuery = (event.target as HTMLInputElement).value.trim().toLowerCase();
+  // Search functionality
+  applySearch(): void {
     this.applyFilters();
   }
 
   clearSearch(): void {
+    this.searchText = '';
+    this.applyFilters();
+  }
+
+  // Reset all filters
+  resetFilters(): void {
+    this.searchText = '';
+    this.fromDate = null;
+    this.toDate = null;
     this.searchQuery = '';
     this.applyFilters();
   }
@@ -139,15 +161,21 @@ export class LeaveManagementComponent implements OnInit {
   updateStatus(leaveId: string, status: string): void {
     this.businessData.updateLeaveStatus(leaveId, status).subscribe({
       next: () => {
+        const message = status === 'Approved' 
+          ? 'You have approved the leave! ' 
+          : 'You have rejected the leave! ';
         this.dialog.open(AlertBoxComponent, {
-          data: { type: 'success', message: `Leave status updated to ${status}` }
+          data: { type: 'success', message: message }
         });
         this.loadAllLeaves();
       },
       error: (error) => {
         console.error('Failed to update status', error);
+        const errorMessage = status === 'Approved' 
+          ? 'Failed to approve the leave. Please try again.' 
+          : 'Failed to reject the leave. Please try again.';
         this.dialog.open(AlertBoxComponent, {
-          data: { type: 'error', message: 'Failed to update leave status' }
+          data: { type: 'error', message: errorMessage }
         });
       }
     });
@@ -176,6 +204,10 @@ export class LeaveManagementComponent implements OnInit {
     this.businessData.onNavigate('leave-management');
   }
 
+  onLeaveManagement(): void {
+    this.businessData.onNavigate('leave-management');
+  }
+
   onEmpDashboard(): void {
     this.businessData.onNavigate('emp-dashboard');
   }
@@ -186,6 +218,10 @@ export class LeaveManagementComponent implements OnInit {
 
   onAdminDashboard(): void {
     this.businessData.onNavigate('admin-dashboard');
+  }
+
+  onPendingApprovals(): void {
+    this.businessData.onNavigate('pending-approvals');
   }
 
   onAdd(): void {
@@ -199,6 +235,32 @@ export class LeaveManagementComponent implements OnInit {
       return nameParts[0].charAt(0).toUpperCase();
     }
     return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  getCurrentDate(): string {
+    const today = new Date();
+    return today.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
+  formatDateRange(startDate: string, endDate: string): string {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    const formatOptions: Intl.DateTimeFormatOptions = { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    };
+    
+    if (start.toDateString() === end.toDateString()) {
+      return start.toLocaleDateString('en-US', formatOptions);
+    }
+    
+    return `${start.toLocaleDateString('en-US', formatOptions)} - ${end.toLocaleDateString('en-US', formatOptions)}`;
   }
 
   // Date filter methods
@@ -220,21 +282,29 @@ export class LeaveManagementComponent implements OnInit {
       filteredData = this.filterLeavesByDate(filteredData);
     }
 
-    // Apply search filter
-    if (this.searchQuery) {
-      const filterValue = this.searchQuery.toLowerCase();
+    // Apply search filter - check both searchQuery and searchText for backward compatibility
+    const searchValue = this.searchQuery || this.searchText;
+    if (searchValue && searchValue.trim()) {
+      const filterValue = searchValue.toLowerCase().trim();
       filteredData = filteredData.filter(leave =>
         leave.employeeName.toLowerCase().includes(filterValue) ||
         leave.employeeId?.toLowerCase().includes(filterValue) ||
+        leave.emailId?.toLowerCase().includes(filterValue) ||
         leave.leaveType.toLowerCase().includes(filterValue) ||
         leave.status.toLowerCase().includes(filterValue)
       );
     }
 
+    this.filteredLeaves = filteredData;
     this.dataSource = filteredData;
     this.pageIndex = 0;
     this.updatePagedLeaves();
-    this.calculateStatusCounts();
+    
+    // Update paginator if it exists
+    if (this.paginator) {
+      this.paginator.firstPage();
+    }
+    // Don't recalculate status counts - they should always show totals
   }
 
   filterLeavesByDate(leaves: LeaveApplication[]): LeaveApplication[] {
@@ -269,5 +339,114 @@ export class LeaveManagementComponent implements OnInit {
       }
       return true;
     });
+  }
+
+  private setupLayoutConfig() {
+    const userRole = localStorage.getItem('role') || 'employee';
+    
+    const employeeNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.addLeaveApplication(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const adminNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Pending Approvals', icon: 'approval', action: () => this.onPendingApprovals(), isActive: () => false },
+      { label: 'Employee Leaves', icon: 'assignment', action: () => this.onLeaveApplication(), isActive: () => true },
+      { label: 'Admin Dashboard', icon: 'dashboard', action: () => this.onAdminDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const managerNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.addLeaveApplication(), isActive: () => false },
+      { label: 'Manage Employee Leaves', icon: 'assignment', action: () => this.onLeaveApplication(), isActive: () => true },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    let navigationItems;
+    if (userRole === 'admin') {
+      navigationItems = adminNavigationItems;
+    } else if (userRole === 'manager') {
+      navigationItems = managerNavigationItems;
+    } else {
+      navigationItems = employeeNavigationItems;
+    }
+
+    this.layoutConfig = {
+      title: 'Msquare Portal',
+      logoPath: '../../../../assets/image/msquare.png',
+      navigationItems: navigationItems,
+      userRole: userRole
+    };
+  }
+
+  getDaysBetween(startDate: string, endDate: string): number | null {
+    if (!startDate || !endDate) {
+      return null;
+    }
+
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Check if dates are valid
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return null;
+      }
+      
+      const timeDifference = end.getTime() - start.getTime();
+      const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24)) + 1;
+      
+      return Math.max(daysDifference, 1);
+    } catch (error) {
+      console.error('Error calculating days:', error);
+      return null;
+    }
+  }
+
+  getRemainingLeaves(employeeId: string): number {
+    if (!employeeId) {
+      return 24; // Default total leaves
+    }
+
+    // Calculate total approved leaves for this employee
+    const approvedLeaves = this.originalDataSource
+      .filter(leave => 
+        (leave.employeeId === employeeId || leave.emailId === employeeId) && 
+        leave.status.toLowerCase() === 'approved'
+      )
+      .reduce((total, leave) => {
+        const days = this.getDaysBetween(leave.startDate, leave.endDate) || 
+                    this.getDaysBetween((leave as any).from, (leave as any).to) || 1;
+        return total + days;
+      }, 0);
+
+    // Assuming 24 total leaves per year
+    const totalLeaves = 24;
+    return Math.max(totalLeaves - approvedLeaves, 0);
+  }
+
+  // Check if the leave belongs to the current manager
+  isManagerOwnLeave(leave: LeaveApplication): boolean {
+    const currentUserEmail = localStorage.getItem('user_email');
+    const currentUserRole = localStorage.getItem('role');
+    
+    // Only apply this logic for managers
+    if (currentUserRole !== 'manager') {
+      return false;
+    }
+    
+    // Check if the leave is from the current manager
+    return leave.emailId === currentUserEmail;
   }
 }

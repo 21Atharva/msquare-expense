@@ -28,10 +28,13 @@ import { AlertBoxComponent } from './alert-box/alert-box.component';
 import { NgChartsModule } from 'ng2-charts';
 import { WelcomeLoaderComponent } from './welcome-loader/welcome-loader.component';
 import { RatingComponent } from './rating/rating.component';
+import { SharedLayoutComponent } from './layout/shared-layout.component';
 import {MatRadioModule} from '@angular/material/radio';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 
 @NgModule({
-  declarations: [LoaderComponent,FooterComponent,ProfileComponent,AlertBoxComponent, WelcomeLoaderComponent, RatingComponent],
+  declarations: [LoaderComponent,FooterComponent,ProfileComponent,AlertBoxComponent, WelcomeLoaderComponent, RatingComponent, SharedLayoutComponent],
   imports: [
     CommonModule,
     MatSidenavModule,
@@ -57,7 +60,9 @@ import {MatRadioModule} from '@angular/material/radio';
     ReactiveFormsModule,
     MatProgressBarModule,
     NgChartsModule,
-    MatRadioModule
+    MatRadioModule,
+    MatMenuModule,
+    MatCheckboxModule
   ],
   exports: [
     LoaderComponent,
@@ -66,6 +71,7 @@ import {MatRadioModule} from '@angular/material/radio';
     AlertBoxComponent,
     WelcomeLoaderComponent,
     RatingComponent,
+    SharedLayoutComponent,
     MatSidenavModule,
     MatToolbarModule,
     MatTooltipModule,
@@ -87,7 +93,9 @@ import {MatRadioModule} from '@angular/material/radio';
     MatProgressBarModule,
     MatProgressSpinnerModule,
     NgChartsModule,
-    MatRadioModule
+    MatRadioModule,
+    MatMenuModule,
+    MatCheckboxModule
   ],
 })
 export class SharedModule {}

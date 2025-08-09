@@ -30,8 +30,10 @@ import { LeaveManagementComponent } from './leave-management/leave-management.co
 import { ConfirmDialogComponent } from './component/header/employee-dashboard/confirm.component';
 import { ImagePreviewDialogComponent } from './component/home/image-preview-dialog/image-preview-dialog.component';
 import { MatNativeDateModule } from '@angular/material/core';
+import { PendingApprovalsComponent } from './pending-approvals/pending-approvals.component';
+import { ConfirmationDialogComponent } from './pending-approvals/confirmation-dialog.component';
 @NgModule({
-  declarations: [AppComponent, AdminDashboardComponent, LeaveManagementComponent,ConfirmDialogComponent, ImagePreviewDialogComponent],
+  declarations: [AppComponent, AdminDashboardComponent, LeaveManagementComponent,ConfirmDialogComponent, ImagePreviewDialogComponent, PendingApprovalsComponent, ConfirmationDialogComponent],
   imports: [
     CommonModule,
     BrowserModule,

@@ -1,0 +1,6 @@
+Name,Amount,Expense Date,Expense Category,Payment Type,Comment,Project ID,Project Name
+Office Supplies,25.50,15/03/2024,Office,Card,Purchased pens and notebooks,PROJ001,Office Setup
+Team Lunch,120.00,16/03/2024,Meals,Cash,Team building lunch,PROJ002,Team Building
+Taxi Fare,18.75,17/03/2024,Travel,UPI,Ride to client meeting,PROJ003,Client Relations
+Software License,299.99,18/03/2024,Technology,Net Banking,Annual subscription,PROJ001,Office Setup
+Coffee Meeting,12.50,19/03/2024,Meals,Card,Client meeting refreshments,PROJ003,Client Relations 

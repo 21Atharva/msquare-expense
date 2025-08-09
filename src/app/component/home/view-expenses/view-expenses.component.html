@@ -9,7 +9,7 @@
     <mat-card class="matContnet">
       <mat-card-content>
         <p class="icons">
-          <mat-icon style="font-size: 48px; width: 50px; height: 50px">
+          <mat-icon style="font-size: 72px; width: 74px; height: 74px">
             {{ card.icon }}
           </mat-icon>
         </p>
@@ -20,8 +20,8 @@
   </div>
 </div>
 
-<!-- ===== EMPLOYEE VIEW ===== -->
-<div class="main" *ngIf="!isLoading && userRole === 'employee'">
+<!-- ===== EMPLOYEE/MANAGER VIEW ===== -->
+<div class="main" *ngIf="!isLoading && (userRole === 'employee' || userRole === 'manager')">
 
   <!-- Charts -->
   <div class="row dashboard-chart-card">
@@ -61,44 +61,49 @@
     <div class="col col-xs-12 col-sm-12">
       <mat-card>
         <mat-card-title style="padding: 10px 20px;">Detail Summary</mat-card-title>
-        <mat-card-subtitle style="padding: 10px 20px;">Click on row to view/Delete Expense</mat-card-subtitle>
+        <mat-card-subtitle style="padding: 10px 20px;" *ngIf="ELEMENT_DATA.length > 0">Click on row to view/Delete Expense</mat-card-subtitle>
         
-        <!-- Date Filter Section -->
-        <div style="padding: 10px 20px; border-bottom: 1px solid #e0e0e0;">
-          <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-            <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-              <mat-label>From Date</mat-label>
-              <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" (dateChange)="onDateFilterChange()" placeholder="Select from date">
-              <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
-              <mat-datepicker #fromPicker></mat-datepicker>
-            </mat-form-field>
+        <!-- Date Filter Section - Show only if there are expenses -->
+        <div style="padding: 5px 15px; border-bottom: 1px solid #e0e0e0; background-color: #fafafa;" class="date-filter-container" *ngIf="ELEMENT_DATA.length > 0">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-between;">
+            <!-- Date Filter Fields -->
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <mat-form-field appearance="outline" style="min-width: 140px; max-width: 180px;">
+                <mat-label style="font-size: 12px;">From Date</mat-label>
+                <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" (dateChange)="onDateFilterChange()" style="font-size: 13px;">
+                <mat-datepicker-toggle matIconSuffix [for]="fromPicker" style="transform: scale(0.8);"></mat-datepicker-toggle>
+                <mat-datepicker #fromPicker></mat-datepicker>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" style="min-width: 140px; max-width: 180px;">
+                <mat-label style="font-size: 12px;">To Date</mat-label>
+                <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" (dateChange)="onDateFilterChange()" style="font-size: 13px;">
+                <mat-datepicker-toggle matIconSuffix [for]="toPicker" style="transform: scale(0.8);"></mat-datepicker-toggle>
+                <mat-datepicker #toPicker></mat-datepicker>
+              </mat-form-field>
+              
+              <button mat-icon-button color="warn" (click)="clearDateFilter()" matTooltip="Clear Filter" style="height: 40px; width: 40px; margin-top: -2px;">
+                <mat-icon style="font-size: 20px;">clear</mat-icon>
+              </button>
+            </div>
             
-            <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-              <mat-label>To Date</mat-label>
-              <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" (dateChange)="onDateFilterChange()" placeholder="Select to date">
-              <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
-              <mat-datepicker #toPicker></mat-datepicker>
-            </mat-form-field>
-            
-            <button mat-stroked-button color="warn" (click)="clearDateFilter()" style="height: 40px;">
-              <mat-icon>clear</mat-icon> Clear Filter
-            </button>
+            <!-- Download Buttons -->
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <button mat-raised-button color="primary" (click)="downloadAllExpensesAsPDF()" style="height: 32px; font-size: 12px;">
+                <mat-icon style="font-size: 16px;">download</mat-icon> PDF
+              </button>
+              <button mat-raised-button color="accent" (click)="downloadAllExpensesAsExcel()" style="height: 32px; font-size: 12px;">
+                <mat-icon style="font-size: 16px;">download</mat-icon> Excel
+              </button>
+            </div>
           </div>
-        </div>
-        
-         <div style="text-align: right; padding: 0px 20px 10px 20px;">
-          <button mat-raised-button color="primary" (click)="downloadAllExpensesAsPDF()" style="margin-right: 10px;">
-            <mat-icon>download</mat-icon> Download All (PDF)
-          </button>
-          <button mat-raised-button color="accent" (click)="downloadAllExpensesAsExcel()">
-            <mat-icon>download</mat-icon> Download All (Excel)
-          </button>
         </div>
         <mat-card-content class="tableContent">
           <div style="margin: 0px 8px; margin-bottom: 20px;">
-            <div class="mat-elevation-z8">
-              <div class="table-container">
-                <table mat-table [dataSource]="dataSource">
+                        <!-- Show table when there are expenses to display -->
+            <div class="" *ngIf="dataSource.data.length > 0">
+                <div class="table-container">
+                  <table mat-table [dataSource]="dataSource">
                   
                  
 
@@ -177,6 +182,20 @@
               </div>
               <mat-paginator [pageSizeOptions]="[5, 10]" showFirstLastButtons></mat-paginator>
             </div>
+
+            <!-- Show no data message when there are no expenses -->
+            <div class="noelement" *ngIf="ELEMENT_DATA.length === 0">
+              <mat-icon style="font-size: 80px; width: 80px; height: 80px; color: #ccc; margin-bottom: 20px;">receipt_long</mat-icon>
+              <p>You don't have any expenses yet</p>
+              <p style="font-size: 16px; color: #999; margin-top: 10px;">Start by adding your first expense using the + button</p>
+            </div>
+
+            <!-- Show filtered no data message when filter returns no results -->
+            <div class="noelement" *ngIf="ELEMENT_DATA.length > 0 && dataSource.data.length === 0">
+              <mat-icon style="font-size: 80px; width: 80px; height: 80px; color: #ccc; margin-bottom: 20px;">search_off</mat-icon>
+              <p>No expenses found for the selected date range</p>
+              <p style="font-size: 16px; color: #999; margin-top: 10px;">Try adjusting your date filter or clear the filter to see all expenses</p>
+            </div>
           </div>
         </mat-card-content>
       </mat-card>
@@ -186,7 +205,7 @@
   <!-- Add Button -->
   <div>
     <button matTooltip="Add Expense" (click)="onAdd()" class="btns" mat-mini-fab color="accent">
-      <mat-icon>add-chart</mat-icon>
+      <mat-icon>add</mat-icon>
     </button>
   </div>
 </div>
@@ -224,107 +243,119 @@
     </div>
   </div>
 
-  <!-- Admin Date Filter Section -->
-  <div style="padding: 20px; background-color: #f5f5f5; margin-bottom: 20px; border-radius: 8px;">
-    <h4 style="margin: 0 0 15px 0; color: #333;">Filter Expenses by Date Range</h4>
-    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-      <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-        <mat-label>From Date</mat-label>
-        <input matInput [matDatepicker]="adminFromPicker" [(ngModel)]="fromDate" (dateChange)="onDateFilterChange()" placeholder="Select from date">
-        <mat-datepicker-toggle matIconSuffix [for]="adminFromPicker"></mat-datepicker-toggle>
-        <mat-datepicker #adminFromPicker></mat-datepicker>
-      </mat-form-field>
-      
-      <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-        <mat-label>To Date</mat-label>
-        <input matInput [matDatepicker]="adminToPicker" [(ngModel)]="toDate" (dateChange)="onDateFilterChange()" placeholder="Select to date">
-        <mat-datepicker-toggle matIconSuffix [for]="adminToPicker"></mat-datepicker-toggle>
-        <mat-datepicker #adminToPicker></mat-datepicker>
-      </mat-form-field>
-      
-      <button mat-stroked-button color="warn" (click)="clearDateFilter()" style="height: 40px;">
-        <mat-icon>clear</mat-icon> Clear Filter
-      </button>
+  <!-- Admin Date Filter Section - Show only if there are expenses -->
+  <div style="padding: 8px 15px; background-color: #fafafa; margin-bottom: 15px; border-radius: 6px; border: 1px solid #e0e0e0;" class="date-filter-container" *ngIf="adminData.length > 0">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <h4 style="margin: 0; color: #333; font-size: 14px; font-weight: 500;">Filter by Date Range</h4>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-between;">
+      <!-- Date Filter Fields -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <mat-form-field appearance="outline" style="min-width: 140px; max-width: 180px;">
+          <mat-label style="font-size: 12px;">From Date</mat-label>
+          <input matInput [matDatepicker]="adminFromPicker" [(ngModel)]="fromDate" (dateChange)="onDateFilterChange()" style="font-size: 13px;">
+          <mat-datepicker-toggle matIconSuffix [for]="adminFromPicker" style="transform: scale(0.8);"></mat-datepicker-toggle>
+          <mat-datepicker #adminFromPicker></mat-datepicker>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" style="min-width: 140px; max-width: 180px;">
+          <mat-label style="font-size: 12px;">To Date</mat-label>
+          <input matInput [matDatepicker]="adminToPicker" [(ngModel)]="toDate" (dateChange)="onDateFilterChange()" style="font-size: 13px;">
+          <mat-datepicker-toggle matIconSuffix [for]="adminToPicker" style="transform: scale(0.8);"></mat-datepicker-toggle>
+          <mat-datepicker #adminToPicker></mat-datepicker>
+        </mat-form-field>
+        
+        <button mat-icon-button color="warn" (click)="clearDateFilter()" matTooltip="Clear Filter" style="height: 40px; width: 40px; margin-top: -2px;">
+          <mat-icon style="font-size: 20px;">clear</mat-icon>
+        </button>
+      </div>
+
     </div>
   </div>
 
-  <!-- Admin Expense Tables per User -->
-<div *ngFor="let group of pagedAdminData" class="table-wrapper">
-  <mat-card class="mat-elevation-z3">
-   <mat-card-header>
-  <mat-card-title>{{ group.gmail }}</mat-card-title>
-  <mat-card-subtitle>
-    Total Expenses: ₹{{ getTotal(group.expenses) }} | Entries: {{ group.expenseCount }}
-  </mat-card-subtitle>
-  <button
-    style="margin-right: 10px;"
-    mat-raised-button
-    color="primary"
-    (click)="downloadAdminExpensePDF(group)">
-    Download All as PDF
-  </button>
-  <button
-    style="margin-left: auto;"
-    mat-raised-button
-    color="accent"
-    (click)="downloadAdminExpenseExcel(group)">
-    Download All as Excel
-  </button>
-</mat-card-header>
+  <!-- Admin Expense Data Table Section -->
+  <div *ngIf="adminData.length > 0; else noAdminData">
+    <div *ngFor="let group of pagedAdminData" style="margin-bottom: 30px;">
+      <mat-card>
+        <mat-card-header style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <mat-card-title>{{ group.gmail || 'Unknown User' }}</mat-card-title>
+            <mat-card-subtitle>{{ group.expenses.length }} expenses - Total: ₹{{ group.totalAmount }}</mat-card-subtitle>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button mat-raised-button color="primary" (click)="downloadEmployeeExpensesAsPDF(group)" style="height: 32px; font-size: 12px;">
+              <mat-icon style="font-size: 16px;">download</mat-icon> PDF
+            </button>
+            <button mat-raised-button color="accent" (click)="downloadEmployeeExpensesAsExcel(group)" style="height: 32px; font-size: 12px;">
+              <mat-icon style="font-size: 16px;">download</mat-icon> Excel
+            </button>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-container">
+            <table mat-table [dataSource]="group.dataSource" class="styled-table">
+              <!-- Columns for admin view -->
+              <ng-container matColumnDef="name">
+                <th style="text-align: center;" mat-header-cell *matHeaderCellDef> Name </th>
+                <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+              </ng-container>
 
+              <ng-container matColumnDef="amount">
+                <th style="text-align: center;" mat-header-cell *matHeaderCellDef> Amount </th>
+                <td mat-cell *matCellDef="let element"> ₹{{element.amount}} </td>
+              </ng-container>
 
-    <mat-card-content>
-      <table class="styled-table">
-        <thead>
-          <tr>
-            <th>NAME</th>
-            <th>DATE</th>
-            <th>AMOUNT</th>
-            <th>RECEIPT</th> <!-- NEW COLUMN -->
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let exp of group.expenses">
-            <td>{{ exp.name }}</td>
-            <td>{{ exp.expense_date }}</td>
-            <td>₹{{ exp.amount }}</td>
-            <td>
-             <img
-  *ngIf="exp.image"
-  [src]="getImagePath(exp.image)"
-  alt="receipt"
-  width="60"
-  height="40"
-  style="border-radius: 4px; object-fit: cover; cursor: pointer;"
-  (click)="openImageDialog(getImagePath(exp.image)); $event.stopPropagation()"
-/>
+              <ng-container matColumnDef="expense_date">
+                <th style="text-align: center;" mat-header-cell *matHeaderCellDef> Date </th>
+                <td mat-cell *matCellDef="let element"> {{element.expense_date}} </td>
+              </ng-container>
 
-              <span *ngIf="!exp.image">No Image</span>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr class="footer-row">
-            <td><strong>TOTAL EXPENSE</strong></td>
-            <td></td>
-            <td><strong>₹{{ getTotal(group.expenses) }}</strong></td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </mat-card-content>
-  </mat-card>
-</div>
+              <ng-container matColumnDef="expense_category">
+                    <th style="text-align: center;" mat-header-cell *matHeaderCellDef> Category </th>
+                <td mat-cell *matCellDef="let element"> {{element.expense_category}} </td>
+              </ng-container>
 
+              <ng-container matColumnDef="download">
+                <th style="text-align: center;" mat-header-cell *matHeaderCellDef> Download </th>
+                <td mat-cell *matCellDef="let element">
+                  <button mat-icon-button color="primary"
+                    (click)="downloadAdminExpensePDF(group)"
+                    matTooltip="Download PDF">
+                    <mat-icon>picture_as_pdf</mat-icon>
+                  </button>
+                  <button mat-icon-button color="accent"
+                    (click)="downloadAdminExpenseExcel(group)"
+                    matTooltip="Download Excel">
+                    <mat-icon>table_chart</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
 
-<!-- Paginator -->
-<mat-paginator
-  [length]="adminData.length"
-  [pageSize]="3"
-  [pageSizeOptions]="[3, 5, 10]"
-  (page)="onPageChange($event)"
-  showFirstLastButtons>
-</mat-paginator>
+              <tr mat-header-row *matHeaderRowDef="['name', 'amount', 'expense_date', 'expense_category', 'download']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['name', 'amount', 'expense_date', 'expense_category', 'download'];"></tr>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
+    <!-- Paginator -->
+    <mat-paginator
+      [length]="adminData.length"
+      [pageSize]="3"
+      [pageSizeOptions]="[3, 5, 10]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
+
+  <!-- No data message for admin -->
+  <ng-template #noAdminData>
+    <div class="noelement">
+      <mat-icon style="font-size: 80px; width: 80px; height: 80px; color: #ccc; margin-bottom: 20px;">assessment</mat-icon>
+      <p>No employee expenses found</p>
+      <p style="font-size: 16px; color: #999; margin-top: 10px;">No employees have submitted expenses yet</p>
+    </div>
+  </ng-template>
 
 </div>

@@ -5,6 +5,7 @@ import { AuthService } from 'src/app/auth/auth.service';
 import { BusinessDataService } from 'src/app/services/business-data.service';
 import { AlertBoxComponent } from 'src/app/shared/alert-box/alert-box.component';
 import { ProfileComponent } from 'src/app/shared/profile/profile.component';
+import { LayoutConfig } from 'src/app/shared/layout/layout.interface';
 
 @Component({
   selector: 'app-header',
@@ -15,6 +16,7 @@ export class HeaderComponent implements OnInit {
   isLoading: boolean = true;
   app_version: any;
   userRole: string = '';
+  layoutConfig!: LayoutConfig;
 
   constructor(
     private route: Router,
@@ -28,10 +30,11 @@ export class HeaderComponent implements OnInit {
   ngOnInit(): void {
     this.userRole = localStorage.getItem('role') || '';
 
+    // Reduced loading time for better UX - no need for long artificial delay
     this.isLoading = true;
     setTimeout(() => {
       this.isLoading = false;
-    }, 4000);
+    }, 0); // Reduced from 4000ms to 300ms
 
      const token = localStorage.getItem('LEAD_ID');
     const userId = localStorage.getItem('Id');
@@ -42,6 +45,7 @@ export class HeaderComponent implements OnInit {
     }
 
     this.authService.authAfterReferesh(true, token); // ✅ safe use
+    this.setupLayoutConfig();
   }
 
   openDialog(): void {
@@ -67,6 +71,10 @@ export class HeaderComponent implements OnInit {
   }
 
   onLeaveApplication(): void {
+    this.businessData.onNavigate('leave-application');
+  }
+
+  onLeaveManagement(): void {
     this.businessData.onNavigate('leave-management');
   }
 
@@ -78,7 +86,58 @@ export class HeaderComponent implements OnInit {
     this.businessData.onNavigate('admin-dashboard');
   }
 
+  onPendingApprovals(): void {
+    this.businessData.onNavigate('pending-approvals');
+  }
+
   onAdd() {
     this.businessData.onNavigate('home');
+  }
+
+  private setupLayoutConfig() {
+    const employeeNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => true },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const adminNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => true },
+      { label: 'Pending Approvals', icon: 'approval', action: () => this.onPendingApprovals(), isActive: () => false },
+      { label: 'Employee Leaves', icon: 'assignment', action: () => this.onLeaveManagement(), isActive: () => false },
+      { label: 'Admin Dashboard', icon: 'dashboard', action: () => this.onadminDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const managerNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => true },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => false },
+      { label: 'Manage Employee Leaves', icon: 'assignment', action: () => this.onLeaveManagement(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    let navigationItems;
+    if (this.userRole === 'admin') {
+      navigationItems = adminNavigationItems;
+    } else if (this.userRole === 'manager') {
+      navigationItems = managerNavigationItems;
+    } else {
+      navigationItems = employeeNavigationItems;
+    }
+
+    this.layoutConfig = {
+      title: 'Msquare Portal',
+      logoPath: '../../../../assets/image/msquare.png',
+      navigationItems: navigationItems,
+      userRole: this.userRole
+    };
   }
 }

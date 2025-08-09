@@ -1,9 +1,136 @@
+// Remove borders from the main card
+.example-card {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+  
+  .mat-mdc-card {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent;
+  }
+}
+
+// Remove any other card borders
+mat-card {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+// Remove form field appearance borders
+.mat-form-field-appearance-outline {
+  .mat-form-field-outline {
+    border: none !important;
+  }
+  
+  .mat-form-field-outline-thick {
+    border: none !important;
+  }
+  
+  .mat-form-field-outline-start,
+  .mat-form-field-outline-end,
+  .mat-form-field-outline-gap {
+    border: none !important;
+  }
+}
+
+// Remove borders from form fields
+.mat-mdc-form-field {
+  border: none !important;
+  
+  .mat-mdc-form-field-outline {
+    border: none !important;
+  }
+  
+  .mat-mdc-form-field-outline-start,
+  .mat-mdc-form-field-outline-end,
+  .mat-mdc-form-field-outline-gap {
+    border: none !important;
+  }
+}
+
 .example-form-field {
   width: 100%;
 }
 
 .example-button-container > button {
   margin: 0 12px;
+}
+
+/* Fix chip display issues */
+mat-chip-grid {
+  min-height: 48px !important;
+  padding: 8px !important;
+  overflow: visible !important;
+}
+
+mat-chip-row {
+  max-width: none !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+  margin: 4px !important;
+  padding: 8px 8px 8px 12px !important; /* Less padding on right for cancel button */
+  height: auto !important;
+  min-height: 32px !important;
+  line-height: 1.2 !important;
+}
+
+/* Ensure chip text is fully visible */
+.mat-mdc-chip-text {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+  max-width: none !important;
+}
+
+/* Fix cancel button positioning and visibility */
+.mat-mdc-chip-remove,
+button[matChipRemove] {
+  margin-left: 4px !important;
+  margin-right: 0 !important;
+  padding: 2px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  border-radius: 50% !important;
+  overflow: visible !important;
+}
+
+.mat-mdc-chip-remove .mat-icon,
+button[matChipRemove] .mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+}
+
+/* Fix form field container */
+.mat-mdc-form-field {
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+.mat-mdc-form-field-infix {
+  min-height: 56px !important;
+  padding: 8px 12px 8px 0 !important; /* Add right padding to prevent cutoff */
+  overflow: visible !important;
+}
+
+/* Ensure chips container doesn't overflow */
+.mat-mdc-chip-set {
+  overflow: visible !important;
+}
+
+/* Fix form field outline to not cut off chips */
+.mat-mdc-form-field-outline {
+  overflow: visible !important;
+}
+
+.mat-mdc-form-field-outline-start,
+.mat-mdc-form-field-outline-end {
+  overflow: visible !important;
 }
 
 .myCard {

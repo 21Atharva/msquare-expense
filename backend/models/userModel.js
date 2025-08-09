@@ -23,7 +23,12 @@ const createExpense = mongoose.Schema({
   creater:{type:mongoose.Schema.Types.ObjectId,ref:"UserSchema",required:true},
   image:{type: String},
   projectId: {type:String},
-    projectName: {type:String},
+  projectName: {type:String},
+  requiresAdminApproval: {type: Boolean, default: false},
+  approvalStatus: {type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved'},
+  approvedBy: {type: mongoose.Schema.Types.ObjectId, ref: "UserSchema"},
+  approvedAt: {type: Date},
+  rejectionReason: {type: String},
 });
 
 
@@ -40,10 +45,7 @@ const userSchmema = mongoose.Schema({
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   role: { type: String, enum: ['admin', 'employee', 'manager'], default: 'employee' },
   category:[],
-  profilePicName: String,
-  department: {  type: String,
-  trim: true,
-  required: false }
+  profilePicName: String
 
 });
 

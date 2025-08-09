@@ -74,6 +74,18 @@ userEmail: string = '';
     public _snackBar: MatSnackBar
   ) {}
 
+  getDisplayName(): string {
+    if (this.userName && this.userEmail) {
+      return `${this.userName} (${this.userEmail})`;
+    } else if (this.userName) {
+      return this.userName;
+    } else if (this.userEmail) {
+      return this.userEmail;
+    } else {
+      return 'User';
+    }
+  }
+
   ngOnInit(): void {
     const id = localStorage.getItem('Id');
     const role = localStorage.getItem('role');
@@ -91,7 +103,7 @@ userEmail: string = '';
       this.userName = name || '';
   this.userEmail = email || '';
 
-    if (this.userRole === 'employee') {
+    if (this.userRole === 'employee' || this.userRole === 'manager') {
       this.getAllExpense(this.userId);
     } else if (this.userRole === 'admin') {
       this.getAllExpensesForAdmin();
@@ -404,94 +416,174 @@ async downloadAdminExpensePDF(group: any) {
 // Excel Download Methods
 downloadAllExpensesAsExcel() {
   const dataToExport = this.filteredData.length > 0 ? this.filteredData : this.ELEMENT_DATA;
-  const data = dataToExport.map((expense, index) => ({
-    'S.No': index + 1,
-    'Name': expense.name,
-    'Amount (₹)': expense.amount,
-    'Date': expense.expense_date,
-    'Category': expense.expense_category,
-    'Payment Method': expense.payment,
-    'Comment': expense.comment || '-',
-    'Receipt': expense.image ? 'Available' : 'No Image'
-  }));
-
-  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
-  const wb: XLSX.WorkBook = XLSX.utils.book_new();
-  
-  // Set column widths
-  ws['!cols'] = [
-    { wch: 8 },  // S.No
-    { wch: 20 }, // Name
-    { wch: 15 }, // Amount
-    { wch: 15 }, // Date
-    { wch: 18 }, // Category
-    { wch: 18 }, // Payment Method
-    { wch: 30 }, // Comment
-    { wch: 12 }  // Receipt
-  ];
-  
-  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
-  XLSX.writeFile(wb, `Expense_Report_${this.userEmail || 'User'}.xlsx`);
+  this.createMSquareExpenseReport(dataToExport, `Expense_Report_${this.userEmail || 'User'}.xlsx`);
 }
 
 downloadSingleExpenseAsExcel(expense: ExpenseContent) {
-  const data = [{
-    'Name': expense.name,
-    'Amount (₹)': expense.amount,
-    'Date': expense.expense_date,
-    'Category': expense.expense_category,
-    'Payment Method': expense.payment,
-    'Comment': expense.comment || '-',
-    'Receipt': expense.image ? 'Available' : 'No Image'
-  }];
+  this.createMSquareExpenseReport([expense], `Expense_${expense.name}_${this.userEmail || 'User'}.xlsx`);
+}
 
-  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+createMSquareExpenseReport(expenses: ExpenseContent[], filename: string) {
   const wb: XLSX.WorkBook = XLSX.utils.book_new();
+  const ws: XLSX.WorkSheet = {};
   
-  // Set column widths
-  ws['!cols'] = [
-    { wch: 20 }, // Name
-    { wch: 15 }, // Amount
-    { wch: 15 }, // Date
-    { wch: 18 }, // Category
-    { wch: 18 }, // Payment Method
-    { wch: 30 }, // Comment
-    { wch: 12 }  // Receipt
+  // Get unique dates and sort them
+  const uniqueDates = [...new Set(expenses.map(e => {
+    const date = new Date(e.expense_date);
+    return date.toLocaleDateString();
+  }))].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  
+  // Group expenses by category and date
+  const categoryDateAmounts: {[key: string]: {[key: string]: number}} = {};
+  const categoryTotals: {[key: string]: number} = {};
+  
+  expenses.forEach(expense => {
+    const category = expense.expense_category || 'Misc exp';
+    const dateStr = new Date(expense.expense_date).toLocaleDateString();
+    
+    if (!categoryDateAmounts[category]) {
+      categoryDateAmounts[category] = {};
+    }
+    
+    categoryDateAmounts[category][dateStr] = (categoryDateAmounts[category][dateStr] || 0) + expense.amount;
+    categoryTotals[category] = (categoryTotals[category] || 0) + expense.amount;
+  });
+  
+  // Calculate date range
+  const fromDate = uniqueDates.length > 0 ? uniqueDates[0] : '';
+  const toDate = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : '';
+  
+  // Get unique project names as site names
+  const projectNames = [...new Set(expenses.map(e => e.projectName).filter(name => name))];
+  const siteNames = projectNames.length > 0 ? projectNames.join(', ') : '-';
+  
+  // Calculate total
+  const grandTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  
+  // Get current date
+  const currentDate = new Date().toLocaleDateString();
+  
+  // Helper function to get category amount for a specific date
+  const getCategoryAmountForDate = (categoryNames: string[], dateStr: string): number => {
+    return categoryNames.reduce((sum, name) => {
+      return sum + (categoryDateAmounts[name] && categoryDateAmounts[name][dateStr] ? categoryDateAmounts[name][dateStr] : 0);
+    }, 0);
+  };
+  
+  // Helper function to get category total with multiple possible category names
+  const getCategoryTotal = (...categoryNames: string[]): number => {
+    return categoryNames.reduce((sum, name) => sum + (categoryTotals[name] || 0), 0);
+  };
+  
+  // Create dynamic header with actual dates
+  const headerRow = ['Sr. N', 'Exp head'];
+  uniqueDates.forEach(date => headerRow.push(date));
+  while (headerRow.length < 8) headerRow.push(''); // Fill remaining columns
+  headerRow.push('TOTAL');
+
+  // Helper function to create category row with amounts for each date
+  const createCategoryRow = (srNo: string, categoryName: string, ...categoryNames: string[]) => {
+    const row = [srNo, categoryName];
+    uniqueDates.forEach(date => {
+      const amount = getCategoryAmountForDate(categoryNames.length > 0 ? categoryNames : [categoryName], date);
+      row.push(amount ? amount.toString() : '');
+    });
+    while (row.length < 8) row.push(''); // Fill remaining columns
+    const total = getCategoryTotal(...(categoryNames.length > 0 ? categoryNames : [categoryName]));
+    row.push(total ? total.toString() : '');
+    return row;
+  };
+
+  // Create the M Square Engineers format with individual dates
+  const data: any[][] = [
+    [], // Empty row
+    ['M Square Engineers'], // Company name
+    [], // Empty row
+    ['Name: ' + this.getDisplayName(), '', '', '', '', '', 'Date: ' + currentDate],
+    ['Site: ' + siteNames, '', '', '', '', '', ''],
+    [], // Empty row
+    ['', '', '', '', '', '', '::: Date:::'],
+    [], // Empty row
+    ['Visit'], 
+    ['No of persons'],
+    headerRow,
+    createCategoryRow('1', 'Travelling'),
+    createCategoryRow('2', 'Conveyance'),
+    createCategoryRow('3', 'Food allowance', 'Food allowance', 'Food', 'Meals'),
+    createCategoryRow('4', 'Printing and stationery', 'Printing and Stationary', 'Printing', 'Stationery'),
+    createCategoryRow('5', 'Telephone exp', 'Telephone', 'Communication', 'Phone'),
+    createCategoryRow('6', 'Medical exp', 'Medical Exp', 'Medical', 'Healthcare'),
+    createCategoryRow('7', 'Pur. Of tools & tackles', 'Tools', 'Equipment'),
+    createCategoryRow('8', 'Pur. Of consumables', 'Consumables', 'Supplies'),
+    createCategoryRow('9', 'Lodging exp', 'Lodging Exp', 'Lodging', 'Accommodation', 'Hotel'),
+    createCategoryRow('10', 'Advance given', 'Advance'),
+    createCategoryRow('11', 'Misc exp', 'Laundry', 'Miscellaneous', 'Others', 'Misc'),
+    ['12', '', '', '', '', '', '', '', ''],
+    ['13', '', '', '', '', '', '', '', ''],
+    ['14', '', '', '', '', '', '', '', ''],
+    ['15', '', '', '', '', '', '', '', ''],
+    [], // Empty row
+    ['', '', '', '', '', '', '', 'TOTAL', grandTotal.toString()]
   ];
   
-  XLSX.utils.book_append_sheet(wb, ws, 'Expense');
-  XLSX.writeFile(wb, `Expense_${expense.name}_${this.userEmail || 'User'}.xlsx`);
+  // Add data to worksheet
+  data.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: colIndex });
+      ws[cellAddress] = { v: cell, t: typeof cell === 'number' ? 'n' : 's' };
+    });
+  });
+  
+  // Set range dynamically based on actual columns used
+  const maxCols = Math.max(...data.map(row => row.length));
+  ws['!ref'] = XLSX.utils.encode_range({ s: { c: 0, r: 0 }, e: { c: maxCols - 1, r: data.length - 1 } });
+  
+  // Set column widths dynamically based on number of dates
+  const columnWidths = [
+    { wch: 8 },   // Sr. N
+    { wch: 20 },  // Exp head
+  ];
+  
+  // Add column width for each date
+  uniqueDates.forEach(() => {
+    columnWidths.push({ wch: 12 });
+  });
+  
+  // Fill remaining columns if needed
+  while (columnWidths.length < 8) {
+    columnWidths.push({ wch: 12 });
+  }
+  
+  // Add TOTAL column
+  columnWidths.push({ wch: 15 });
+  
+  ws['!cols'] = columnWidths;
+  
+  // Style the header
+  const headerStyle = {
+    font: { bold: true, sz: 14 },
+    alignment: { horizontal: 'center' }
+  };
+  
+  if (ws['A2']) ws['A2'].s = headerStyle; // M Square Engineers
+  
+  XLSX.utils.book_append_sheet(wb, ws, 'Expense Report');
+  XLSX.writeFile(wb, filename);
 }
 
 downloadAdminExpenseExcel(group: any) {
-  const data = group.expenses.map((expense: any, index: number) => ({
-    'S.No': index + 1,
-    'Name': expense.name,
-    'Amount (₹)': expense.amount,
-    'Date': expense.expense_date,
-    'Category': expense.expense_category,
-    'Payment Method': expense.payment,
-    'Comment': expense.comment || '-',
-    'Receipt': expense.image ? 'Available' : 'No Image'
-  }));
-
-  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
-  const wb: XLSX.WorkBook = XLSX.utils.book_new();
+  // Temporarily set user data for the report
+  const originalUserName = this.userName;
+  const originalUserEmail = this.userEmail;
   
-  // Set column widths
-  ws['!cols'] = [
-    { wch: 8 },  // S.No
-    { wch: 20 }, // Name
-    { wch: 15 }, // Amount
-    { wch: 15 }, // Date
-    { wch: 18 }, // Category
-    { wch: 18 }, // Payment Method
-    { wch: 30 }, // Comment
-    { wch: 12 }  // Receipt
-  ];
+  this.userName = group.name || '';
+  this.userEmail = group.gmail || '';
   
-  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
-  XLSX.writeFile(wb, `${group.gmail || 'user'}_Expenses_Report.xlsx`);
+  this.createMSquareExpenseReport(group.expenses, `${group.gmail || 'user'}_Expenses_Report.xlsx`);
+  
+  // Restore original user data
+  this.userName = originalUserName;
+  this.userEmail = originalUserEmail;
 }
 
 getFullImageUrl(path: string): string {
@@ -664,8 +756,15 @@ getBase64ImageFromURL(url: string): Promise<string> {
     this.count = 0;
 
     for (let expense of data) {
+      // Add null/undefined checks for required fields
+      if (!expense.expense_category || expense.amount === undefined || expense.amount === null) {
+        console.warn('Skipping expense with missing category or amount:', expense);
+        continue;
+      }
+      
       const category = expense.expense_category;
-      const amount = expense.amount;
+      const amount = parseFloat(expense.amount) || 0; // Ensure amount is a number
+      
       if (!this.hashMap[category]) {
         this.hashMap[category] = 0;
       }
@@ -680,7 +779,9 @@ getBase64ImageFromURL(url: string): Promise<string> {
       }
     }
 
-    this.cards[3].content = '₹' + this.count;
+    if (this.cards && this.cards[3]) {
+      this.cards[3].content = '₹' + this.count;
+    }
   }
 
   openPieChart() {
@@ -694,9 +795,21 @@ getBase64ImageFromURL(url: string): Promise<string> {
   onBarChartEdit(data: any[]) {
     let hashmap: any = {};
     for (let expense of data) {
-      let date = expense.expense_date.toString().split(' ');
-      hashmap[date[3]] = hashmap[date[3]] || [];
-      hashmap[date[3]].push([date[1], expense.amount]);
+      // Add null/undefined checks for expense_date and amount
+      if (!expense.expense_date || !expense.amount) {
+        console.warn('Skipping expense with missing date or amount:', expense);
+        continue;
+      }
+      
+      try {
+        let date = expense.expense_date.toString().split(' ');
+        if (date.length >= 4) { // Ensure we have at least 4 parts (day, month, date, year)
+          hashmap[date[3]] = hashmap[date[3]] || [];
+          hashmap[date[3]].push([date[1], expense.amount]);
+        }
+      } catch (error) {
+        console.warn('Error processing expense date:', expense.expense_date, error);
+      }
     }
     this.businessData.hashmap = hashmap;
   }
@@ -754,7 +867,7 @@ getBase64ImageFromURL(url: string): Promise<string> {
   }
 
   applyDateFilter() {
-    if (this.userRole === 'employee') {
+    if (this.userRole === 'employee' || this.userRole === 'manager') {
       this.filteredData = this.filterExpensesByDate(this.ELEMENT_DATA);
       this.dataSource.data = this.filteredData;
     } else if (this.userRole === 'admin') {
@@ -811,6 +924,103 @@ getBase64ImageFromURL(url: string): Promise<string> {
     const end = start + this.pageSize;
     const dataToPage = this.filteredAdminData.length > 0 ? this.filteredAdminData : this.adminData;
     this.pagedAdminData = dataToPage.slice(start, end);
+  }
+
+  // Employee-specific download methods for admin view
+  async downloadEmployeeExpensesAsPDF(group: any) {
+    const doc = new jsPDF();
+    const logoBase64 = await this.getBase64ImageFromAssets('assets/image/msquare.png');
+
+    const wrapper = document.createElement('div');
+    wrapper.style.width = '1000px';
+
+    // HTML structure with logo and table header for specific employee
+    wrapper.innerHTML = `
+      <div style="font-family: Arial; padding: 10px;">
+        <div style="text-align: center;">
+          <img src="${logoBase64}" style="width: 160px; height: auto; margin-bottom: 10px;" />
+          <h2 style="margin: 0;">Employee Expense Report</h2>
+        </div>
+        <p><strong>Employee:</strong> ${group.gmail || 'Unknown User'}</p>
+        <p><strong>Total Expenses:</strong> ${group.expenses.length} | <strong>Total Amount:</strong> ₹${group.totalAmount}</p>
+        <hr style="margin: 10px 0;" />
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;" border="1">
+          <thead style="background-color: #f0f0f0;">
+            <tr>
+              <th style="padding: 5px;">#</th>
+              <th style="padding: 5px;">Name</th>
+              <th style="padding: 5px;">Amount</th>
+              <th style="padding: 5px;">Date</th>
+              <th style="padding: 5px;">Category</th>
+              <th style="padding: 5px;">Payment</th>
+              <th style="padding: 5px;">Comment</th>
+              <th style="padding: 5px;">Receipt</th>
+            </tr>
+          </thead>
+          <tbody id="expense-body"></tbody>
+        </table>
+      </div>
+    `;
+
+    document.body.appendChild(wrapper);
+    const tbody = wrapper.querySelector('#expense-body');
+
+    const dataToExport = group.expenses;
+    for (let i = 0; i < dataToExport.length; i++) {
+      const e = dataToExport[i];
+      const receiptUrl = e.image ? this.getImagePath(e.image) : '';
+      let base64Img = '';
+
+      if (receiptUrl) {
+        try {
+          base64Img = await this.toBase64(receiptUrl);
+        } catch (err) {
+          console.warn('Failed to convert image:', err);
+        }
+      }
+
+      // Expense row
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="padding: 5px;">${i + 1}</td>
+        <td style="padding: 5px;">${e.name}</td>
+        <td style="padding: 5px;">₹${e.amount}</td>
+        <td style="padding: 5px;">${e.expense_date}</td>
+        <td style="padding: 5px;">${e.expense_category}</td>
+        <td style="padding: 5px;">${e.payment}</td>
+        <td style="padding: 5px;">${e.comment || '-'}</td>
+        <td style="padding: 5px; text-align: center;">
+          ${base64Img ? `<img src="${base64Img}" style="width: 70px; height: auto; border-radius: 4px;" />` : 'No Image'}
+        </td>
+      `;
+      tbody?.appendChild(row);
+
+      // Horizontal separator after each row
+      const separator = document.createElement('tr');
+      separator.innerHTML = `
+        <td colspan="8" style="padding: 0;">
+          <div style="height: 1px; background-color: #ccc; margin: 4px 0;"></div>
+        </td>
+      `;
+      tbody?.appendChild(separator);
+    }
+
+    // Convert the whole wrapper to canvas and add to PDF
+    const canvas = await html2canvas(wrapper, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const imgProps = doc.getImageProperties(imgData);
+    const pdfWidth = doc.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    doc.save(`Expense_Report_${group.gmail || 'Employee'}.pdf`);
+
+    // Clean up
+    document.body.removeChild(wrapper);
+  }
+
+  downloadEmployeeExpensesAsExcel(group: any) {
+    this.createMSquareExpenseReport(group.expenses, `Expense_Report_${group.gmail || 'Employee'}.xlsx`);
   }
 }
 

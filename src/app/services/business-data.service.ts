@@ -91,6 +91,8 @@ getSaveDataById(id: string): Observable<any> {
     let date = values.expense_date.split('/');
     date = new Date(date[2], date[1] - 1, date[0]).toString().split(' ');
     let body = {
+      projectId: values.projectId || 'IMPORT', // Default project ID for imported expenses
+      projectName: values.projectName || 'CSV Import', // Default project name for imported expenses  
       name: values.expense_name,
       amount: values.amount,
       expense_date: date[0] + ' ' + date[1] + ' ' + date[2] + ' ' + date[3],
@@ -100,6 +102,22 @@ getSaveDataById(id: string): Observable<any> {
       creater: id,
     };
     return this.http.post(this.apiUrl + 'CREATE_EXPENSE', body);
+  }
+
+  // Get pending expenses for admin approval with pagination
+  onGetPendingExpenses(page: number = 1, limit: number = 5) {
+    return this.http.get(`${this.apiUrl}PENDING_EXPENSES?page=${page}&limit=${limit}`);
+  }
+
+  // Approve or reject an expense
+  onApproveExpense(userId: string, expenseId: string, action: 'approved' | 'rejected', rejectionReason?: string) {
+    const body = {
+      userId: userId,
+      expenseId: expenseId,
+      action: action,
+      rejectionReason: rejectionReason
+    };
+    return this.http.post(this.apiUrl + 'APPROVE_EXPENSE', body);
   }
 
   onCreateCategory(body: any) {
@@ -150,9 +168,7 @@ getManagers(): Observable<any> {
   return this.http.get(`${this.apiUrl}USER/managers`);
 }
 
-getEmployeesByDepartment(department: string): Observable<any> {
-  return this.http.get(`${this.apiUrl}USER/employees/by-department?department=${department}`);
-}
+
 
 
 
@@ -186,7 +202,7 @@ updateWholeInfo(body: any, id: string) {
     const headers = new HttpHeaders();
     // Don't set Content-Type header for FormData, let browser handle it
     
-    return this.http.post(`${this.apiUrl}/leaves`, formData, { headers });
+    return this.http.post(`${this.apiUrl}leaves`, formData, { headers });
   }
 
 
@@ -198,15 +214,13 @@ updateWholeInfo(body: any, id: string) {
   return this.http.get<any>(`${this.apiUrl}USER/user/${id}`);
 }
 
-getLeavesByDepartment(department: string) {
-  return this.http.get<any[]>(`${this.apiUrl}leaves/by-department/${department}`);
-}
+
 
 
   private baseUrl = 'http://localhost:3000/v1/api/leave';
 
    getLeavesByManager(managerId: string) {
-  return this.http.get<LeaveApplication[]>(`${this.apiUrl}/leaves/for-manager/${managerId}`);
+  return this.http.get<LeaveApplication[]>(`${this.apiUrl}leaves/for-manager/${managerId}`);
 }
 
   getAllLeaves() {
@@ -214,7 +228,7 @@ getLeavesByDepartment(department: string) {
   }
 
   updateLeaveStatus(leaveId: string, status: string) {
-    return this.http.patch<LeaveApplication>(`${this.apiUrl}/status/${leaveId}`, { status });
+    return this.http.patch<LeaveApplication>(`${this.apiUrl}leave/status/${leaveId}`, { status });
   }
 
  updateLeaveApplication(leaveId: string, updateFields: any): Observable<any> {
@@ -225,6 +239,21 @@ deleteLeaveApplication(leaveId: string): Observable<any> {
   return this.http.delete(`${this.apiUrl}leave/${leaveId}`);
 }
 
+// Manager leave approval methods
+getPendingManagerLeaves(): Observable<any> {
+  return this.http.get(`${this.apiUrl}manager-leaves/pending`);
+}
+
+approveManagerLeave(leaveId: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}manager-leave/admin-approval/${leaveId}`, { action: 'approved' });
+}
+
+rejectManagerLeave(leaveId: string, rejectionReason?: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}manager-leave/admin-approval/${leaveId}`, { 
+    action: 'rejected', 
+    rejectionReason 
+  });
+}
 
   approveEmployeeByGmail(gmail: string) {
   return this.http.patch(`${this.apiUrl}USER/approve/${gmail}`, {});

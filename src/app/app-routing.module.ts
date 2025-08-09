@@ -8,6 +8,7 @@ import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.compo
 import { LoginComponent } from './component/welcome/login/login.component';
 import { WelcomeComponent } from './component/welcome/welcome.component';
 import { LeaveManagementComponent } from './leave-management/leave-management.component';
+import { PendingApprovalsComponent } from './pending-approvals/pending-approvals.component';
 import { ProfileComponent } from './shared/profile/profile.component';
 
 const routes: Routes = [
@@ -31,19 +32,23 @@ const routes: Routes = [
   {
     path:'dashboard',
     loadChildren:()=>import("./component/home/home.module").then((m)=>m.HomeModule),
+    canActivate:[AuthGuard]
   },
 
   {
   path: 'leave-application',
-  component: LeaveApplicationComponent
+  component: LeaveApplicationComponent,
+  canActivate:[AuthGuard]
   },
   {
   path: 'emp-dashboard',
-  component: EmployeeDashboardComponent
+  component: EmployeeDashboardComponent,
+  canActivate:[AuthGuard]
   },
   {
   path: 'admin-dashboard',
-  component: AdminDashboardComponent
+  component: AdminDashboardComponent,
+  canActivate:[AuthGuard]
   },
    {
   path: 'welcome',
@@ -51,12 +56,20 @@ const routes: Routes = [
   },
    {
   path: 'leave-management',
-  component: LeaveManagementComponent
+  component: LeaveManagementComponent,
+  canActivate:[AuthGuard]
+  },
+
+  {
+  path: 'pending-approvals',
+  component: PendingApprovalsComponent,
+  canActivate:[AuthGuard]
   },
 
   {
   path: 'profile',
-  component: ProfileComponent
+  component: ProfileComponent,
+  canActivate:[AuthGuard]
   },
   
   

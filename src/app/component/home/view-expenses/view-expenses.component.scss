@@ -1,15 +1,15 @@
 .main {
-  padding: 30px 25px;
+  padding: 30px 10px;
   background-color: #f4f6f9; /* Light theme background */
   width: 100%;
   height: auto;
 }
 
 mat-card {
-  margin: 0px 25px;
+  margin: 0px 5px;
   margin-bottom: 20px;
   background-color: #ffffff !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
   border-radius: 12px;
 }
 
@@ -43,11 +43,11 @@ mat-card-content {
 .matContnet:hover {
   transform: scale(1.03);
   transition: 0.3s ease;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .front {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 16px;
   color: #555;
   margin-top: 6px;
@@ -55,7 +55,7 @@ mat-card-content {
 
 .front1 {
   font-size: 22px;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-weight: bold;
   color: #0d47a1;
 }
@@ -65,10 +65,31 @@ table {
   border-collapse: collapse;
 }
 
+.mat-table {
+  width: 100% !important;
+}
+
+/* Full width styling for table content */
+.tableContent .table-container {
+  width: 100%;
+  margin: 0;
+}
+
+mat-card-content.tableContent {
+  padding: 0 !important;
+}
+
+.tableContent {
+  overflow: hidden;
+  position: relative;
+  display: contents;
+}
+
 .table-container {
+  width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  padding: 10px 20px;
+  padding: 10px 5px;
 }
 
 .noelement {
@@ -82,7 +103,7 @@ table {
   font-size: 22px;
   font-weight: 400;
   color: #888;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .btn-pie {
@@ -106,6 +127,10 @@ table {
   background-color: #0d47a1 !important;
   color: white !important;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btns mat-icon {
+  color: white !important;
 }
 
 .btns:hover {
@@ -132,7 +157,7 @@ table {
 .styled-table {
   border-collapse: collapse;
   width: 100%;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 14px;
   text-align: left;
 }
@@ -186,4 +211,192 @@ table {
 .footer-label {
   text-align: left;
   padding-left: 10px;
+}
+
+/* Compact Date Filter Styles */
+.date-filter-container {
+  .mat-form-field {
+    font-size: 13px;
+    
+    .mat-form-field-label {
+      font-size: 12px;
+    }
+    
+    .mat-form-field-infix {
+      padding: 0.4em 0;
+      border-top: 0.6em solid transparent;
+    }
+    
+    .mat-form-field-wrapper {
+      padding-bottom: 1em;
+    }
+  }
+  
+  .mat-datepicker-toggle {
+    .mat-icon-button {
+      width: 2em;
+      height: 2em;
+      line-height: 2em;
+    }
+  }
+}
+
+/* Remove 16px padding from all text boxes */
+.mat-form-field-infix {
+  padding: 0 !important;
+}
+
+.mat-form-field-wrapper {
+  padding-bottom: 0 !important;
+}
+
+.mat-form-field-flex {
+  padding: 0 !important;
+}
+
+.mat-form-field-outline .mat-form-field-infix {
+  padding: 8px 0 !important;
+}
+
+.mat-input-element {
+  padding: 0 !important;
+}
+
+/* Override Material input padding */
+input.mat-input-element {
+  padding: 0 !important;
+}
+
+textarea.mat-input-element {
+  padding: 0 !important;
+}
+
+/* Responsive adjustments for compact date filters */
+@media (max-width: 768px) {
+  .date-filter-container {
+    .mat-form-field {
+      min-width: 120px !important;
+      max-width: 150px !important;
+    }
+    
+    /* Stack date filters and download buttons vertically on mobile */
+    div[style*="justify-content: space-between"] {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 10px !important;
+      
+      > div:first-child {
+        order: 1;
+      }
+      
+      > div:last-child {
+        order: 2;
+      }
+    }
+    
+    /* Make download buttons smaller on mobile */
+    button[mat-raised-button] {
+      font-size: 11px !important;
+      height: 28px !important;
+      
+      mat-icon {
+        font-size: 14px !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .date-filter-container {
+    padding: 5px 10px !important;
+    
+    .mat-form-field {
+      min-width: 100px !important;
+      max-width: 130px !important;
+    }
+    
+    /* Stack all elements vertically on very small screens */
+    div[style*="display: flex"] {
+      flex-direction: column !important;
+      gap: 8px !important;
+      
+      > div {
+        width: 100%;
+        justify-content: center !important;
+      }
+    }
+  }
+}
+
+/* Admin View Employee Download Buttons */
+mat-card-header[style*="justify-content: space-between"] {
+  padding: 16px !important;
+  
+  /* Left align employee info */
+  > div:first-child {
+    text-align: left !important;
+  }
+  
+  .mat-card-title {
+    margin-bottom: 4px !important;
+    text-align: left !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+  }
+  
+  .mat-card-subtitle {
+    margin-bottom: 0 !important;
+    text-align: left !important;
+    font-size: 14px !important;
+  }
+  
+  /* Download buttons in header */
+  button[mat-raised-button] {
+    box-shadow: none !important;
+    
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+}
+
+/* Responsive design for employee download buttons */
+@media (max-width: 768px) {
+  mat-card-header[style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    
+    /* Buttons container */
+    > div:last-child {
+      align-self: stretch !important;
+      justify-content: center !important;
+    }
+    
+    button[mat-raised-button] {
+      flex: 1;
+      max-width: 120px;
+      font-size: 11px !important;
+      height: 28px !important;
+      
+      mat-icon {
+        font-size: 14px !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  mat-card-header[style*="justify-content: space-between"] {
+    /* Stack buttons vertically on very small screens */
+    > div:last-child {
+      flex-direction: column !important;
+      gap: 6px !important;
+      
+      button[mat-raised-button] {
+        max-width: none;
+        width: 100%;
+      }
+    }
+  }
 }

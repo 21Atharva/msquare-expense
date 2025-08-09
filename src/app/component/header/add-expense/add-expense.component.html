@@ -1,7 +1,5 @@
 <!-- Loader -->
-<div *ngIf="showLoader" class="loaderRelay">
-  <app-welcome-loader></app-welcome-loader>
-</div>
+<app-welcome-loader *ngIf="showLoader" [msg]="''"></app-welcome-loader>
 
 <!-- Main Card Container -->
 <div [ngClass]="{ 'main-class': isEdit }">
@@ -17,14 +15,14 @@
   <div class="col-sm-6">
     <mat-form-field appearance="outline" style="width: 100%">
       <mat-label>Project ID</mat-label>
-      <input matInput formControlName="projectId" placeholder="Enter Project ID" />
+      <input style="margin-top: 10px;" matInput formControlName="projectId" />
     </mat-form-field>
   </div>
 
   <div class="col-sm-6">
     <mat-form-field appearance="outline" style="width: 100%">
       <mat-label>Project Name</mat-label>
-      <input matInput formControlName="projectName" placeholder="Enter Project Name" />
+      <input style="margin-top: 10px;" matInput formControlName="projectName" />
     </mat-form-field>
   </div>
 </div>
@@ -33,14 +31,14 @@
           <div class="col-sm-6">
             <mat-form-field appearance="outline" style="width: 100%">
               <mat-label>Expense Name</mat-label>
-              <input matInput formControlName="name" />
+              <input style="margin-top: 10px;" matInput formControlName="name" />
             </mat-form-field>
           </div>
 
           <div class="col-sm-6">
             <mat-form-field appearance="outline" style="width: 100%">
               <mat-label>Amount</mat-label>
-              <input matInput type="number" formControlName="amount" />
+              <input style="margin-top: 10px;" matInput type="number" formControlName="amount" />
             </mat-form-field>
           </div>
         </div>
@@ -50,7 +48,7 @@
           <div class="col-sm-6">
             <mat-form-field appearance="outline" style="width: 100%">
               <mat-label>Date</mat-label>
-              <input matInput [matDatepicker]="picker" formControlName="expense_date" />
+              <input style="margin-top: 10px;" matInput [matDatepicker]="picker" formControlName="expense_date" />
               <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
               <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
@@ -60,7 +58,7 @@
             <mat-form-field appearance="outline" style="width: 100%">
               <mat-label>Category</mat-label>
               <mat-select formControlName="expense_category">
-                <mat-option *ngFor="let item of tags" [value]="item">{{ item }}</mat-option>
+                <mat-option *ngFor="let item of (tags && tags.length > 0) ? tags : keywords" [value]="item">{{ item }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
@@ -82,8 +80,20 @@
         <div class="row">
           <mat-form-field appearance="outline" style="width: 100%">
             <mat-label>Comment</mat-label>
-            <textarea matInput formControlName="comment"></textarea>
+            <textarea style="margin-top: 10px;" matInput formControlName="comment"></textarea>
           </mat-form-field>
+        </div>
+
+        <!-- Admin Approval Checkbox -->
+        <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
+          <mat-checkbox formControlName="requiresAdminApproval" color="primary">
+            <span style="margin-left: 8px; font-size: 14px; color: #666;">
+              Requires Admin Approval
+            </span>
+          </mat-checkbox>
+          <div style="margin-top: 5px; font-size: 12px; color: #999; margin-left: 32px;">
+            Check this if the expense needs admin approval before being added to dashboard
+          </div>
         </div>
 
         <!-- Image Upload -->
@@ -99,8 +109,8 @@
   <p><strong>Click to upload</strong> or drag and drop receipt image</p>
   <span>JPG, PNG, or PDF (Max: 5MB)</span>
 
-  <div class="file-name" *ngIf="imagePreview">
-    Selected file: {{ imagePreview }}
+  <div class="file-name" *ngIf="selectedFileName">
+    Selected file: {{ selectedFileName }}
   </div>
 </div>
 
@@ -108,7 +118,7 @@
         <!-- Image Preview -->
         <div class="row" *ngIf="imagePreview">
           <div class="col-sm-12 mt-2">
-            <img [src]="imagePreview" alt="Preview" width="200" style="border: 1px solid #ccc; padding: 5px" />
+            <img [src]="imagePreview" alt="Preview" width="200" style="padding: 5px" />
           </div>
         </div>
       </form>

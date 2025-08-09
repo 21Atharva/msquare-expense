@@ -7,6 +7,7 @@ import { AlertBoxComponent } from 'src/app/shared/alert-box/alert-box.component'
 import { ProfileComponent } from 'src/app/shared/profile/profile.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from './confirm.component';
+import { LayoutConfig } from 'src/app/shared/layout/layout.interface';
 
 interface Leave {
   [key: string]: any; 
@@ -31,6 +32,7 @@ interface Leave {
   styleUrls: ['./employee-dashboard.component.scss']
 })
 export class EmployeeDashboardComponent implements OnInit {
+  layoutConfig!: LayoutConfig;
   totalLeaves = 24;
   leavesTaken = 0;
   pendingLeaves = 0;
@@ -42,20 +44,29 @@ employeeLeaveStatus: { [key: string]: string } = {}; // Map of email -> status
 
 employeeColumns: string[] = ['name', 'email', 'department', 'role'];
   allLeaves: Leave[] = [];
-  pagedLeaves: Leave[] = [];
+  filteredLeaves: Leave[] = [];
+  paginatedLeaves: Leave[] = [];
+  pageSize = 10;
+  pageIndex = 0;
+  totalItems = 0;
 
-  columnsToDisplay: string[] = ['leaveType', 'startDate', 'endDate', 'status', 'reason', 'actions'];
+  // Date filter
+  fromDate: Date | null = null;
+  toDate: Date | null = null;
+  
+  // Search filter
+  searchText: string = '';
 
-  // Paginator
-  pageSize = 5;
-  currentPage = 0;
-
-  // Editing
- editingIndex: number | null = null;
-pageIndex: number = 0; 
-editedLeave: Leave | null = null;
-userRole: string = '';
-
+  // Leave type filter
+  selectedLeaveType = 'all';
+  leaveTypeOptions = [
+    { value: 'all', label: 'All Types' },
+    { value: 'Sick Leave', label: 'Sick Leave' },
+    { value: 'Casual Leave', label: 'Casual Leave' },
+    { value: 'Earned Leave', label: 'Earned Leave' },
+    { value: 'Maternity Leave', label: 'Maternity Leave' },
+    { value: 'Paternity Leave', label: 'Paternity Leave' }
+  ];
 
   constructor(
     private route: Router,
@@ -74,74 +85,146 @@ userRole: string = '';
             this.allLeaves = res.data;
 
             this.leavesTaken = this.allLeaves
-              .filter((leave: Leave) => leave.status === 'Approved')
-              .reduce((sum: number, leave: Leave) => sum + (leave.totalDays || 0), 0);
+              .filter(leave => leave.status.toLowerCase() === 'approved')
+              .reduce((total, leave) => total + (leave.totalDays || 0), 0);
 
-            this.pendingLeaves = this.totalLeaves - this.leavesTaken;
+            this.pendingLeaves = this.allLeaves
+              .filter(leave => leave.status.toLowerCase() === 'pending').length;
 
-            this.updatePagedLeaves();
+            this.applyFilters();
           }
         },
-        error: (err) => {
-          console.error('Error fetching leave data:', err);
-        }
-      });
-
-       const userId = localStorage.getItem('Id');
-    if (userId) {
-      this.businessData.getUserById(userId).subscribe({
-        next: (user: any) => {
-          this.userRole = user?.role || '';
-        },
-        error: (err) => {
-          console.error('Error fetching user role:', err);
+        error: (err: any) => {
+          console.error('Error fetching leaves:', err);
         }
       });
     }
-    }
+    this.setupLayoutConfig();
   }
 
-  hasPendingLeaves(): boolean {
-  return this.pagedLeaves.some(leave => leave.status === 'Pending');
-}
-updatePagedLeaves(): void {
-  const start = this.currentPage * this.pageSize;
-  const end = start + this.pageSize;
-  this.pagedLeaves = this.allLeaves.slice(start, end);
+  applyFilters(): void {
+    this.filteredLeaves = this.allLeaves.filter(leave => {
+      // Date range filter
+      let dateMatch = true;
+      if (this.fromDate || this.toDate) {
+        const leaveStartDate = new Date(leave.startDate);
+        const leaveEndDate = new Date(leave.endDate);
+        
+        if (this.fromDate) {
+          const fromDate = new Date(this.fromDate);
+          dateMatch = dateMatch && (leaveStartDate >= fromDate || leaveEndDate >= fromDate);
+        }
+        
+        if (this.toDate) {
+          const toDate = new Date(this.toDate);
+          dateMatch = dateMatch && (leaveStartDate <= toDate || leaveEndDate <= toDate);
+        }
+      }
+      
+      // Search filter
+      const searchMatch = !this.searchText || 
+        leave.reason?.toLowerCase().includes(this.searchText.toLowerCase()) ||
+        leave.leaveType?.toLowerCase().includes(this.searchText.toLowerCase()) ||
+        leave.status?.toLowerCase().includes(this.searchText.toLowerCase());
+      
+      // Leave type filter
+      const typeMatch = this.selectedLeaveType === 'all' || leave.leaveType === this.selectedLeaveType;
+      
+      return dateMatch && searchMatch && typeMatch;
+    });
 
-  const hasPending = this.pagedLeaves.some(leave => leave.status === 'Pending');
+    this.totalItems = this.filteredLeaves.length;
+    this.pageIndex = 0; // Reset to first page when filters change
+    this.updatePaginatedLeaves();
+  }
 
-  this.columnsToDisplay = hasPending
-    ? ['leaveType', 'startDate', 'endDate', 'status', 'reason', 'actions']
-    : ['leaveType', 'startDate', 'endDate', 'status', 'reason'];
-}
+  clearFilters(): void {
+    this.fromDate = null;
+    this.toDate = null;
+    this.searchText = '';
+    this.selectedLeaveType = 'all';
+    this.applyFilters();
+  }
 
-  pageChange(event: PageEvent): void {
-    this.currentPage = event.pageIndex;
+  onLeaveTypeFilterChange(): void {
+    this.applyFilters();
+  }
+
+  updatePaginatedLeaves(): void {
+    const startIndex = this.pageIndex * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedLeaves = this.filteredLeaves.slice(startIndex, endIndex);
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
-    this.updatePagedLeaves();
+    this.updatePaginatedLeaves();
   }
 
-  // openDialog(): void {
-  //   this.dialog.open(ProfileComponent, { width: '100px' });
-  // }
-
-  onView(): void {
-    this.route.navigate(['dashboard']);
+  getStatusClass(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'approved': return 'status-approved';
+      case 'pending': return 'status-pending';
+      case 'rejected': return 'status-rejected';
+      default: return 'status-unknown';
+    }
   }
 
-  onProfile(): void{
+  getStatusIcon(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'approved': return 'check_circle';
+      case 'pending': return 'schedule';
+      case 'rejected': return 'cancel';
+      default: return 'help';
+    }
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Invalid Date';
+    }
+  }
+
+  deleteLeave(leaveId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Delete Leave Application',
+        message: 'Are you sure you want to delete this leave application? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+                 // this.businessData.deleteLeave(leaveId).subscribe({
+                   // TODO: Implement delete functionality in business service
+         this.snackBar.open('Delete functionality not yet implemented', 'Close', {
+           duration: 3000,
+           panelClass: ['info-snackbar']
+         });
+      }
+    });
+  }
+
+  // Navigation methods
+  onProfile(): void {
     this.dialog.open(ProfileComponent, {
       width: '600px',
     });
   }
 
-  
-
-  onLogout(): void {
-    this.dialog.open(AlertBoxComponent, {
-      data: { type: 'alert' }
-    });
+  onView(): void {
+    this.route.navigate(['dashboard']);
   }
 
   onLeaveApplication(): void {
@@ -152,146 +235,123 @@ updatePagedLeaves(): void {
     this.businessData.onNavigate('emp-dashboard');
   }
 
-  // Start Editing a row
- originalLeave: Leave | null = null;
-
-startEditing(index: number) {
-  const leaveToEdit = this.pagedLeaves[index];
-  if (leaveToEdit.status !== 'Pending') return;
-
-  this.editingIndex = index;
-  this.editedLeave = { ...leaveToEdit };        // clone to edit
-  this.originalLeave = { ...leaveToEdit };      // clone to compare
-}
-
-  // Cancel editing
-  cancelEditing(): void {
-    this.editingIndex = null;
-    this.editedLeave = {} as Leave;
+  onLogout(): void {
+    this.dialog.open(AlertBoxComponent, {
+      data: { type: 'alert' }
+    });
   }
 
-submitEdit() {
-  if (!this.editedLeave || !this.originalLeave || !this.editedLeave._id || !this.editedLeave.leaveId) return;
-
-  const updatedFields: any = {};
-  const editableKeys = [
-    'leaveType',
-    'startDate',
-    'endDate',
-    'reason',
-    'totalDays',
-    'isStartHalfDay',
-    'startHalfDayType',
-    'isEndHalfDay',
-    'endHalfDayType',
-    'status'
-  ];
-
-  editableKeys.forEach((key) => {
-    if (this.editedLeave![key] !== this.originalLeave![key]) {
-      updatedFields[key] = this.editedLeave![key];
-    }
-  });
-
-  if (Object.keys(updatedFields).length === 0) {
-    alert('No changes made.');
-    return;
+  onAdd(): void {
+    this.businessData.onNavigate('home');
   }
 
-  this.businessData.updateLeaveApplication(this.editedLeave.leaveId, updatedFields).subscribe({
-    next: (response) => {
-      this.snackBar.open('Leave Updated successfully!', 'Close', {
-            duration: 3000,
-            verticalPosition: 'top',
-            panelClass: ['success-snackbar']
-          });
-      console.log('Leave updated successfully', response);
+  onLeaveManagement(): void {
+    this.businessData.onNavigate('leave-management');
+  }
 
-      if (this.editingIndex !== null) {
-        this.allLeaves[this.editingIndex] = {
-          ...this.allLeaves[this.editingIndex],
-          ...updatedFields
-        };
-      }
+  onAdminDashboard(): void {
+    this.businessData.onNavigate('admin-dashboard');
+  }
 
-      this.updatePagedLeaves();
-      this.editingIndex = null;
-      this.editedLeave = null;
-      this.originalLeave = null;
-    },
-    error: (err) => {
-      console.error('Error updating leave:', err);
-      alert('Failed to update leave. Please try again.');
+  onPendingApprovals(): void {
+    this.businessData.onNavigate('pending-approvals');
+  }
+
+  // Toggle employees view
+  toggleEmployeesView(): void {
+    this.showEmployees = !this.showEmployees;
+    
+    if (this.showEmployees && !this.isEmployeesLoaded) {
+      this.loadEmployees();
     }
-  });
-}
+  }
 
-onDeleteLeave(index: number) {
-  const leave = this.pagedLeaves[index];
-if (!leave.leaveId) return;
-
-  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-    width: '300px',
-    data: { message: 'Are you sure you want to delete this leave application?' }
-  });
-
-  dialogRef.afterClosed().subscribe(result => {
-    if (result) {
-      this.businessData.deleteLeaveApplication(leave.leaveId!).subscribe({
-        next: (res) => {
-          this.snackBar.open('Leave deleted successfully!', 'Close', {
-            duration: 3000,
-            verticalPosition: 'top',
-            panelClass: ['success-snackbar']
+  loadEmployees(): void {
+    this.businessData.getAllEmployees().subscribe({
+      next: (res: any) => {
+        if (res?.data) {
+          this.employees = res.data;
+          
+          // Get employee leave status
+          this.employees.forEach(employee => {
+            this.getEmployeeLeaveStatus(employee.gmail);
           });
-
-          const globalIndex = this.allLeaves.findIndex(l => l.leaveId === leave.leaveId);
-          if (globalIndex !== -1) {
-            this.allLeaves.splice(globalIndex, 1);
-            this.updatePagedLeaves();
-          }
-        },
-        error: (err) => {
-          console.error('Error deleting leave:', err);
-          this.snackBar.open('Failed to delete leave.', 'Close', {
-            duration: 3000,
-            verticalPosition: 'top',
-            panelClass: ['error-snackbar']
-          });
+          
+          this.isEmployeesLoaded = true;
         }
-      });
-    }
-  });
-}
-
-
-toggleEmployees(): void {
-  this.showEmployees = !this.showEmployees;
-
-  if (this.showEmployees && !this.isEmployeesLoaded) {
-    const userId = localStorage.getItem('Id');
-    if (!userId) return;
-
-    this.businessData.getUserById(userId).subscribe({
-      next: (user: any) => {
-        const department = user?.department?.trim();
-        if (!department) return;
-
-        this.businessData.getEmployeesByDepartment(department).subscribe({
-          next: (res) => {
-            this.employeesInDept = res.data || [];
-            this.isEmployeesLoaded = true;
-          },
-          error: (err) => {
-            console.error('Error loading employees:', err);
-          }
-        });
       },
-      error: (err) => {
-        console.error('Error fetching user:', err);
+      error: (err: any) => {
+        console.error('Error loading employees:', err);
       }
     });
   }
-}
 
+  getEmployeeLeaveStatus(email: string): void {
+    this.businessData.getLeavesByEmployeeId(email).subscribe({
+      next: (res: any) => {
+        if (res?.data && res.data.length > 0) {
+          // Get most recent leave application
+          const recentLeave = res.data.sort((a: any, b: any) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )[0];
+          
+          this.employeeLeaveStatus[email] = recentLeave.status;
+        } else {
+          this.employeeLeaveStatus[email] = 'No applications';
+        }
+      },
+      error: (err: any) => {
+        console.error('Error loading employees:', err);
+      }
+    });
+  }
+
+  private setupLayoutConfig() {
+    const userRole = localStorage.getItem('role') || 'employee';
+    
+    const employeeNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => true },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const adminNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Pending Approvals', icon: 'approval', action: () => this.onPendingApprovals(), isActive: () => false },
+      { label: 'Employee Leaves', icon: 'assignment', action: () => this.onLeaveManagement(), isActive: () => false },
+      { label: 'Admin Dashboard', icon: 'dashboard', action: () => this.onAdminDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const managerNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.onProfile(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => true },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => false },
+      { label: 'Manage Employee Leaves', icon: 'assignment', action: () => this.onLeaveManagement(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    let navigationItems;
+    if (userRole === 'admin') {
+      navigationItems = adminNavigationItems;
+    } else if (userRole === 'manager') {
+      navigationItems = managerNavigationItems;
+    } else {
+      navigationItems = employeeNavigationItems;
+    }
+
+    this.layoutConfig = {
+      title: 'Msquare Portal',
+      logoPath: '../../../../assets/image/msquare.png',
+      navigationItems: navigationItems,
+      userRole: userRole
+    };
+  }
 }

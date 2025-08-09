@@ -50,11 +50,14 @@ router.post('/leaves', upload.single('attachment'), async (req, res) => {
 
     const leaveDays = parseFloat(totalDays);
 
+    // Check if the employee is a manager
+    const isManager = employee.role === 'manager';
+    
     const newLeave = new LeaveApplication({
       employeeId,
       employeeName: employee.name,     // 🔁 from UserSchema
       emailId: employee.gmail,         // 🔁 from UserSchema
-      department: employee.department,
+      managerId: employee.managerId,   // 🔁 Store employee's assigned manager
       leaveType,
       startDate,
       endDate,
@@ -65,6 +68,8 @@ router.post('/leaves', upload.single('attachment'), async (req, res) => {
       endHalfDayType,
       totalDays: leaveDays,
       status: 'Pending',
+      requiresAdminApproval: isManager, // Managers require admin approval
+      adminApprovalStatus: isManager ? 'pending' : 'approved',
       attachment: req.file?.filename || null // Optional if you're storing file name
     });
 
@@ -78,22 +83,23 @@ router.post('/leaves', upload.single('attachment'), async (req, res) => {
   }
 });
 
-// GET leaves for manager based on department
+// GET leaves for manager - returns leaves from employees assigned to this manager
 // GET /api/leaves/manager/:managerId
 router.get('/leaves/manager/:managerId', async (req, res) => {
   try {
-    const leaves = await LeaveApplication.find({ managerId: req.params.managerId });
+    const leaves = await LeaveApplication.find({ managerId: req.params.managerId })
+      .populate('managerId', 'name gmail');
     res.status(200).json(leaves);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching leaves for manager', error: err });
   }
 });
 
-// GET leaves for manager by department
+// GET leaves for manager - returns leaves from employees assigned to this manager
 router.get('/leaves/for-manager/:managerId', async (req, res) => {
   try {
     const manager = await Employee.findById(req.params.managerId);
-    console.log("Fetched Manager:", manager); // 🔍 ADD THIS LINE
+    console.log("Fetched Manager:", manager);
 
     if (!manager) {
       return res.status(404).json({ message: 'Manager not found' });
@@ -103,18 +109,12 @@ router.get('/leaves/for-manager/:managerId', async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Not a manager.' });
     }
 
-    const department = manager.department;
-    
-
-    if (!department) {
-      console.error("Manager department not found:", manager); // ⚠️ ADD THIS
-      return res.status(400).json({ message: 'Manager does not have a department assigned.' });
-    }
-
-    const leaves = await LeaveApplication.find({ department });
+    // Filter leaves by managerId to show only leaves from employees assigned to this manager
+    const leaves = await LeaveApplication.find({ managerId: req.params.managerId })
+      .populate('managerId', 'name gmail');
 
     res.status(200).json({
-      message: `Leaves for department: ${department}`,
+      message: `Leave applications for manager ${manager.name}`,
       data: leaves,
       status: true
     });
@@ -232,7 +232,7 @@ router.get('/leaves/by-email/:gmail', async (req, res) => {
 
 
 // PATCH /v1/api/leave/status/:leaveId
-router.patch('/status/:leaveId', async (req, res) => {
+router.patch('/leave/status/:leaveId', async (req, res) => {
   try {
     const { status } = req.body; // Expected: { status: 'Approved' } or 'Rejected'
     const leaveId = req.params.leaveId; // UUID string
@@ -253,6 +253,74 @@ router.patch('/status/:leaveId', async (req, res) => {
   }
 });
 
+// GET: Get all manager leaves pending admin approval
+router.get('/manager-leaves/pending', async (req, res) => {
+  try {
+    const pendingManagerLeaves = await LeaveApplication.find({
+      requiresAdminApproval: true,
+      adminApprovalStatus: 'pending'
+    }).populate('employeeId', 'name gmail role').sort({ createdAt: -1 });
 
+    res.status(200).json({
+      message: 'Pending manager leaves retrieved',
+      data: pendingManagerLeaves,
+      status: true
+    });
+  } catch (error) {
+    console.error('Error fetching pending manager leaves:', error);
+    res.status(500).json({
+      message: 'Server error',
+      status: false,
+      error: error.message
+    });
+  }
+});
+
+// PATCH: Admin approve/reject manager leave
+router.patch('/manager-leave/admin-approval/:leaveId', async (req, res) => {
+  try {
+    const { leaveId } = req.params;
+    const { action, rejectionReason } = req.body; // action: 'approved' or 'rejected'
+    
+    const updateData = {
+      adminApprovalStatus: action,
+      statusUpdatedOn: new Date()
+    };
+
+    if (action === 'rejected' && rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+      updateData.status = 'Rejected'; // Also update main status
+    } else if (action === 'approved') {
+      updateData.status = 'Approved'; // Update main status to approved
+    }
+
+    const updatedLeave = await LeaveApplication.findOneAndUpdate(
+      { leaveId: leaveId },
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedLeave) {
+      return res.status(404).json({
+        message: 'Leave application not found',
+        status: false
+      });
+    }
+
+    const actionText = action === 'approved' ? 'approved' : 'rejected';
+    res.status(200).json({
+      message: `Manager leave ${actionText} successfully`,
+      data: updatedLeave,
+      status: true
+    });
+  } catch (error) {
+    console.error('Error updating manager leave approval:', error);
+    res.status(500).json({
+      message: 'Server error',
+      status: false,
+      error: error.message
+    });
+  }
+});
 
 module.exports = router;

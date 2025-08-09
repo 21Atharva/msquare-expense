@@ -12,10 +12,17 @@ export class AuthGuard implements CanActivate {
   constructor(public authService:AuthService,public router:Router) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    let isAuth=this.authService.getIsAuth();
-    if(!isAuth){
-        this.router.navigate(['welcome']);
+    let isAuth = this.authService.getIsAuth();
+    console.log('🔒 AuthGuard - isAuthenticated:', isAuth);
+    console.log('🔒 AuthGuard - trying to access:', state.url);
+    
+    if (!isAuth) {
+      console.log('🔒 AuthGuard - Not authenticated, redirecting to welcome');
+      this.router.navigate(['welcome']);
+      return false;
     }
-    return isAuth;
+    
+    console.log('🔒 AuthGuard - Access granted');
+    return true;
   }
 }

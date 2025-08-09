@@ -1,79 +1,15 @@
-<mat-drawer-container class="drawer-container" autosize>
+<app-shared-layout 
+  [config]="layoutConfig" 
+  (logoutEvent)="onLogout()"
+>
+  <!-- Leave Management Content -->
+  <div class="leave-management-container">
 
-  <!-- Sidebar -->
-  <mat-drawer #drawer mode="over" class="example-sidenav" style="height: 100%">
-        <img src="../../../../assets/image/msquare.png" alt="Msquare Engineers Logo" class="brand-logo" />
-
-    <h2 style="border-bottom: 2px solid red; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      Msquare Portal
-    </h2>
-
-    <!-- Admin Sidebar -->
-    <div class="side-nav-btn" *ngIf="userRole === 'admin'">
-      <button mat-raised-button color="primary" (click)="onProfile()">
-        <mat-icon>perm_identity</mat-icon>Profile
-      </button>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="onAdd()">
-          <mat-icon>add-chart</mat-icon>Add Expenses
-        </button>
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1 class="page-title">Leave Management</h1>
+        <p class="page-date">{{ getCurrentDate() }}</p>
       </div>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="onLeaveApplication()">
-          <mat-icon>add</mat-icon>Manage Employee Leaves
-        </button>
-      </div>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="onAdminDashboard()">
-          <mat-icon>dashboard</mat-icon>Admin Dashboard
-        </button>
-      </div>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="onLogout()">
-          <mat-icon>logout</mat-icon>Logout
-        </button>
-      </div>
-    </div>
-
-    <!-- Employee/Manager Sidebar -->
-    <div class="side-nav-btn" *ngIf="userRole === 'employee' || userRole === 'manager'">
-      <button mat-raised-button color="primary" (click)="onProfile()">
-        <mat-icon>perm_identity</mat-icon>Profile
-      </button>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="onAdd()">
-          <mat-icon>add-chart</mat-icon>Add Expenses
-        </button>
-      </div>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="addLeaveApplication()">
-          <mat-icon>add</mat-icon>Leave Application
-        </button>
-      </div>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="onEmpDashboard()">
-          <mat-icon>add</mat-icon>Leave Dashboard
-        </button>
-      </div>
-      <div style="margin-top: 20px">
-        <button mat-raised-button color="primary" (click)="onLogout()">
-          <mat-icon>logout</mat-icon>Logout
-        </button>
-      </div>
-    </div>
-  </mat-drawer>
-
-  <!-- Main Content -->
-  <mat-drawer-content>
-    <mat-toolbar color="primary">
-      <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle menu">
-        <mat-icon>menu</mat-icon>
-      </button>
-      <span style="margin-left: 10px;">All Leave Applications</span>
-    </mat-toolbar>
-
-    <div class="scroll-content">
-      <div class="main-content">
 
       <!-- Statistics -->
       <div class="stats-grid">
@@ -95,44 +31,70 @@
         </div>
       </div>
 
-      <!-- Date Filter Section -->
-      <div style="padding: 20px; background-color: #f5f5f5; margin-top: 20px; margin-bottom: 20px; border-radius: 8px;">
-        <h4 style="margin: 0 0 15px 0; color: #333;">Filter Leaves by Date Range</h4>
-        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-          <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-            <mat-label>From Date</mat-label>
-            <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" (dateChange)="onDateFilterChange()" placeholder="Select from date">
-            <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
-            <mat-datepicker #fromPicker></mat-datepicker>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-            <mat-label>To Date</mat-label>
-            <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" (dateChange)="onDateFilterChange()" placeholder="Select to date">
-            <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
-            <mat-datepicker #toPicker></mat-datepicker>
-          </mat-form-field>
-          
-          <button mat-stroked-button color="warn" (click)="clearDateFilter()" style="height: 40px;">
-            <mat-icon>clear</mat-icon> Clear Date Filter
-          </button>
-        </div>
+
+
+      <!-- Leave Management Header with Search -->
+      <div class="section-header">
+        <h2 class="section-title">
+          <span *ngIf="userRole === 'admin'">Leave Approval</span>
+          <span *ngIf="userRole === 'manager'">Leave Approval</span>
+          <span *ngIf="userRole === 'employee'">Leave Applications</span>
+          <span class="status-indicator" *ngIf="pendingCount > 0">🟠 Pending</span>
+        </h2>
       </div>
 
-      <!-- Leave Approval Header with Search -->
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-        <h2 class="section-title" style="margin: 0; display: flex; align-items: center;">
-          <span class="status-indicator"></span>
-          Leave Approval
-        </h2>
+      <!-- Filter Controls -->
+      <div class="filter-container" *ngIf="userRole === 'admin' || userRole === 'manager'">
+        <mat-card class="filter-card">
+          <mat-card-content>
+            <div class="filter-row">
+              <!-- Search Filter -->
+              <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Search employees, email, or leave type</mat-label>
+                <input style="margin-top: 10px;" matInput [(ngModel)]="searchText" (input)="applyFilters()" placeholder="Type to search...">
+                <mat-icon matSuffix>search</mat-icon>
+                <button matSuffix mat-icon-button aria-label="Clear search" (click)="clearSearch()" *ngIf="searchText">
+                  <mat-icon>clear</mat-icon>
+                </button>
+              </mat-form-field>
 
-        <mat-form-field appearance="outline" style="width: 300px; margin-top: 10px;">
-          <mat-label>Search Leaves</mat-label>
-          <input matInput (input)="applyFilter($event)" [(ngModel)]="searchQuery" placeholder="Search by Name, Email, Type or Status" />
-          <button mat-icon-button matSuffix (click)="clearSearch()" *ngIf="searchQuery">
-            <mat-icon>clear</mat-icon>
-          </button>
-        </mat-form-field>
+              <!-- Date Range Filter -->
+              <div class="date-filter-group">
+                <mat-form-field appearance="outline" class="date-field">
+                  <mat-label>From Date</mat-label>
+                  <input style="margin-top: 10px;" matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" (dateChange)="onDateFilterChange()">
+                  <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #fromPicker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="date-field">
+                  <mat-label>To Date</mat-label>
+                  <input style="margin-top: 10px;" matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" (dateChange)="onDateFilterChange()">
+                  <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #toPicker></mat-datepicker>
+                </mat-form-field>
+              </div>
+
+              <!-- Filter Actions -->
+              <div class="filter-actions">
+                <button mat-stroked-button (click)="resetFilters()">
+                  <mat-icon>clear_all</mat-icon>
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <!-- Filter Summary -->
+            <div class="filter-summary" *ngIf="searchText || fromDate || toDate">
+              <span class="filter-info">
+                <strong>Showing {{ dataSource.length }} of {{ originalDataSource.length }} records</strong>
+                <span *ngIf="searchText"> • Search: "{{ searchText }}"</span>
+                <span *ngIf="fromDate"> • From: {{ fromDate | date:'dd MMM yyyy' }}</span>
+                <span *ngIf="toDate"> • To: {{ toDate | date:'dd MMM yyyy' }}</span>
+              </span>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </div>
 
       <!-- Admin Table View -->
@@ -143,7 +105,7 @@
               
               <!-- Employee Name Column -->
               <ng-container matColumnDef="employeeName">
-                <th mat-header-cell *matHeaderCellDef>Employee Name</th>
+                <th style="text-align: center;" mat-header-cell *matHeaderCellDef>Employee Name</th>
                 <td mat-cell *matCellDef="let leave">
                   <div class="employee-cell">
                     <div class="employee-avatar-small">{{ getInitials(leave.employeeName) }}</div>
@@ -174,12 +136,31 @@
               </ng-container>
 
               <!-- Total Days Column -->
-              <ng-container matColumnDef="totalDays">
-                <th mat-header-cell *matHeaderCellDef>Days Count</th>
-                <td mat-cell *matCellDef="let leave">
-                  <div class="days-count-cell">
-                    <span class="days-number">{{ leave.totalDays }}</span>
-                    <span class="days-label">{{ leave.totalDays === 1 ? 'Day' : 'Days' }}</span>
+              <ng-container  matColumnDef="totalDays">
+                <th style="text-align: center;" mat-header-cell *matHeaderCellDef>Days Count</th>
+                <td style="text-align: center;" mat-cell *matCellDef="let leave">
+                                      <div class="days-count-cell">
+                     <div style="color: #2c3e50; font-size: 1.4rem; font-weight: bold; text-align: left; margin-bottom: 4px; padding-left: 20px;">
+                       {{ getDaysBetween(leave.startDate, leave.endDate) || getDaysBetween(leave.from, leave.to) || 1 }}
+                     </div>
+                     <div style="color: #666; font-size: 0.75rem; text-transform: uppercase; font-weight: 500; text-align: left; padding-left: 20px;">
+                       {{ (getDaysBetween(leave.startDate, leave.endDate) || getDaysBetween(leave.from, leave.to) || 1) === 1 ? 'Day' : 'Days' }}
+                     </div>
+                    </div>
+                </td>
+              </ng-container>
+
+              <!-- Remaining Leaves Column -->
+              <ng-container matColumnDef="remainingLeaves">
+                <th style="text-align: center;" mat-header-cell *matHeaderCellDef>Remaining Leaves</th>
+                <td style="text-align: center;" mat-cell *matCellDef="let leave">
+                  <div class="remaining-leaves-cell">
+                    <div style="color: #28a745; font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 2px;">
+                      {{ getRemainingLeaves(leave.employeeId || leave.emailId) }}
+                    </div>
+                    <div style="color: #666; font-size: 0.65rem; text-transform: uppercase; font-weight: 500; text-align: center;">
+                      REMAINING
+                    </div>
                   </div>
                 </td>
               </ng-container>
@@ -210,67 +191,55 @@
       <div *ngIf="userRole !== 'admin'" class="leave-cards-grid">
         <ng-container *ngIf="pagedLeaves.length > 0; else noLeavesFound">
           <div class="leave-card" *ngFor="let leave of pagedLeaves">
-            <div class="card-header">
-              <div class="employee-info">
-                <div class="employee-avatar">{{ getInitials(leave.employeeName) }}</div>
-                <div class="employee-details">
-                  <h3 style="word-break: break-word;">{{ leave.employeeName }}</h3>
-                  <div class="employee-id">{{ leave.emailId }}</div>
-                </div>
+            <!-- Employee Info Section -->
+            <div class="employee-section">
+              <div class="employee-avatar">{{ getInitials(leave.employeeName) }}</div>
+              <div class="employee-details">
+                <h3 class="employee-name">{{ leave.employeeName }}</h3>
+                <p class="employee-id">{{ leave.emailId }}</p>
               </div>
-              <div class="leave-badge">
-                <span class="material-icons" style="font-size: 14px;">schedule</span>
-                {{ leave.totalDays }}
-              </div>
+             
             </div>
 
-            <div class="card-content">
-              <h3 class="leave-title" [matTooltip]="leave.reason" matTooltipPosition="above">
-                {{ leave.reason.length > 25 ? (leave.reason | slice: 0:25) + '...' : leave.reason }}
-              </h3>
-
-              <div class="leave-dates">
-                {{ leave.startDate | date:'mediumDate' }}
-                <ng-container *ngIf="leave.isStartHalfDay">
-                  <small style="color: orange">Half Day ({{ leave.startHalfDayType }})</small>
-                </ng-container>
-                -
-                {{ leave.endDate | date:'mediumDate' }}
-                <ng-container *ngIf="leave.isEndHalfDay">
-                  <small style="color: orange">Half Day ({{ leave.endHalfDayType }})</small>
-                </ng-container>
-              </div>
-
-              <div class="leave-details">
-                <div class="detail-item">
-                  <span class="material-icons detail-icon">event</span>
-                  <span>{{ leave.leaveType }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="material-icons detail-icon">today</span>
-                  <span>{{ leave.totalDays }}</span>
-                </div>
-              </div>
+            <!-- Leave Details Section -->
+            <div class="leave-section">
+              <h4 class="leave-reason">{{ leave.reason }}</h4>
+              <p class="leave-dates">{{ formatDateRange(leave.startDate, leave.endDate) }}</p>
             </div>
 
-            <div class="card-actions">
-              <button 
-                class="action-btn btn-deny" 
-                [ngClass]="{ 'disabled-btn': leave.status === 'Rejected' }"
-                (click)="updateStatus(leave.leaveId, 'Rejected')" 
-                [disabled]="leave.status === 'Rejected'">
-                <span class="material-icons" style="font-size: 16px;">close</span>
-                Deny
-              </button>
+            <!-- Leave Type and Duration -->
+            <div class="type-section">
+              <span class="leave-type">{{ leave.leaveType }}</span>
+              <div class="rating-badge">
+                <mat-icon>schedule</mat-icon>
+                {{ leave.totalDays }}'
+              </div>
+              <!-- <span class="leave-duration">{{ leave.totalDays }} days</span> -->
+            </div>
 
-              <button 
-                class="action-btn btn-approve" 
-                [ngClass]="{ 'disabled-btn': leave.status === 'Approved' }"
-                (click)="updateStatus(leave.leaveId, 'Approved')" 
-                [disabled]="leave.status === 'Approved'">
-                <span class="material-icons" style="font-size: 16px;">check</span>
-                Approve
-              </button>
+            <!-- Action Buttons -->
+            <div class="actions-section">
+              <!-- Show admin approval message for managers' own leaves -->
+              <div *ngIf="isManagerOwnLeave(leave)" class="admin-approval-message">
+                <mat-icon>admin_panel_settings</mat-icon>
+                <span>Requires Admin Approval</span>
+              </div>
+              
+              <!-- Regular approval buttons for other leaves -->
+              <div *ngIf="!isManagerOwnLeave(leave)">
+                <button 
+                  class="action-btn deny-btn" 
+                  [disabled]="leave.status === 'Rejected'"
+                  (click)="updateStatus(leave.leaveId, 'Rejected')">
+                  Deny
+                </button>
+                <button 
+                  class="action-btn approve-btn" 
+                  [disabled]="leave.status === 'Approved'"
+                  (click)="updateStatus(leave.leaveId, 'Approved')">
+                  Approve
+                </button>
+              </div>
             </div>
           </div>
         </ng-container>
@@ -278,30 +247,31 @@
 
       <!-- Not Found Message -->
       <ng-template #noLeavesFound>
-        <div style="text-align: center; width: 100%; padding: 50px 0; font-size: 18px; color: #999;">
-          <mat-icon style="vertical-align: middle; font-size: 40px; color: #ccc;">search_off</mat-icon><br>
-          <span *ngIf="searchQuery; else noDataMessage">
-            No results found for "<strong>{{ searchQuery }}</strong>".
-          </span>
+        <div class="no-data-container">
+          <mat-icon>search_off</mat-icon>
+          <p *ngIf="searchQuery || searchText || fromDate || toDate; else noDataMessage">
+            No results found
+            <span *ngIf="searchQuery || searchText"> for "<strong>{{ searchQuery || searchText }}</strong>"</span>
+            <span *ngIf="fromDate || toDate"> with the selected date range</span>.
+          </p>
           <ng-template #noDataMessage>
-            No leave applications found.
+            <p>No leave applications found.</p>
           </ng-template>
         </div>
       </ng-template>
 
       <!-- Paginator -->
-      <div class="paginator-wrapper">
+      <div class="paginator-wrapper" *ngIf="dataSource.length > 0">
         <mat-paginator
+          #paginator
           [length]="dataSource.length"
           [pageSize]="pageSize"
-          [pageSizeOptions]="[6, 12, 24]"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="[5, 10, 20, 50]"
           (page)="pageChange($event)"
           showFirstLastButtons>
         </mat-paginator>
       </div>
 
-
-    </div>
-    </div>
-  </mat-drawer-content>
-</mat-drawer-container>
+  </div>
+</app-shared-layout>

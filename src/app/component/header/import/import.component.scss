@@ -1,25 +1,217 @@
+// Remove borders from stepper
 .mat-stepper-horizontal {
-    margin-top: 8px;
-  }
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+  margin-top: 8px;
+}
+
+// Remove all stepper borders and connectors
+mat-stepper {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.mat-stepper-horizontal,
+.mat-stepper-vertical {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+// Remove borders from stepper steps
+.mat-step-header {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+// Remove step content borders
+.mat-step-content {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+// Remove step connectors/lines
+.mat-stepper-horizontal-line {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.mat-horizontal-stepper-header-container {
+  border: none !important;
+}
+
+.mat-horizontal-content-container {
+  border: none !important;
+}
+
+// Remove step icon borders
+.mat-step-icon,
+.mat-step-icon-selected,
+.mat-step-icon-state-done,
+.mat-step-icon-state-edit {
+  border: none !important;
+}
+
+// Remove any wrapper borders
+.mat-horizontal-stepper-wrapper {
+  border: none !important;
+}
+
+// Remove table borders
+.mat-elevation-z8 {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+table {
+  width: 100%;
+  overflow: visible;
+  border: none !important;
+  box-shadow: none !important;
+  table-layout: fixed; // Fixed layout for consistent column widths
+}
+
+// Remove cell borders
+.mat-mdc-table {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mat-mdc-header-cell,
+.mat-mdc-cell {
+  border: none !important;
+}
+
+.mat-mdc-row {
+  border: none !important;
+}
+
+.mat-mdc-header-row {
+  border: none !important;
+}
+
+// Remove Material table borders (additional targeting)
+.mat-table {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mat-header-cell,
+.mat-cell {
+  border: none !important;
+}
+
+.mat-row,
+.mat-header-row {
+  border: none !important;
+}
+
+// Remove form field borders
+.mat-mdc-form-field {
+  margin-top: 16px;
+  border: none !important;
   
-  .mat-mdc-form-field {
-    margin-top: 16px;
+  .mat-mdc-form-field-outline {
+    border: none !important;
   }
-  .view{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  table {
+}
+
+.view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.table-container {
+  max-width: 100%;
+  overflow-x: hidden;
+  border: none !important;
+  box-shadow: none !important;
+  
+  // Responsive table styling
+  .mat-mdc-table {
     width: 100%;
-    overflow-x:hidden;
+    
+    // Column width distribution for 8 columns
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 8px 4px !important;
+      font-size: 12px !important;
+      line-height: 1.2 !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      white-space: normal !important;
+      
+      // Specific column widths
+      &:nth-child(1) { width: 12%; } // Name
+      &:nth-child(2) { width: 10%; } // Amount  
+      &:nth-child(3) { width: 16%; } // Expense Date
+      &:nth-child(4) { width: 14%; } // Expense Category
+      &:nth-child(5) { width: 12%; } // Payment Type
+      &:nth-child(6) { width: 12%; } // Comment
+      &:nth-child(7) { width: 12%; } // Project ID
+      &:nth-child(8) { width: 12%; } // Project Name
+    }
+    
+    .mat-mdc-header-cell {
+      font-weight: 600 !important;
+      font-size: 11px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+    }
   }
-  .table-container{
-    max-width: 100%;
-    overflow-x: scroll;
+}
+
+.tables {
+  overflow: hidden;
+  position: relative;
+  display: contents;
+}
+
+// Responsive design for smaller screens
+@media (max-width: 1200px) {
+  .table-container .mat-mdc-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      font-size: 11px !important;
+      padding: 6px 2px !important;
+      
+      // Adjust widths for medium screens
+      &:nth-child(1) { width: 10%; } // Name
+      &:nth-child(2) { width: 8%; }  // Amount  
+      &:nth-child(3) { width: 18%; } // Expense Date
+      &:nth-child(4) { width: 16%; } // Expense Category
+      &:nth-child(5) { width: 12%; } // Payment Type
+      &:nth-child(6) { width: 12%; } // Comment
+      &:nth-child(7) { width: 12%; } // Project ID
+      &:nth-child(8) { width: 12%; } // Project Name
+    }
   }
-  .tables{
-    overflow:hidden;
-    position: relative;
-    display: contents;
+}
+
+@media (max-width: 768px) {
+  .table-container .mat-mdc-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      font-size: 10px !important;
+      padding: 4px 1px !important;
+      
+      // Adjust widths for small screens
+      &:nth-child(1) { width: 8%; }  // Name
+      &:nth-child(2) { width: 8%; }  // Amount  
+      &:nth-child(3) { width: 20%; } // Expense Date
+      &:nth-child(4) { width: 16%; } // Expense Category
+      &:nth-child(5) { width: 12%; } // Payment Type
+      &:nth-child(6) { width: 12%; } // Comment
+      &:nth-child(7) { width: 12%; } // Project ID
+      &:nth-child(8) { width: 12%; } // Project Name
+    }
+    
+    .mat-mdc-header-cell {
+      font-size: 9px !important;
+    }
+  }
 }

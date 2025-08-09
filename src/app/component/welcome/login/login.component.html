@@ -17,6 +17,8 @@
 
       <p class="login-header">Login</p>
 
+
+
       <!-- 🔄 Loader displayed inside login card -->
       <div *ngIf="LoginContinue">
         <app-welcome-loader [msg]="msg"></app-welcome-loader>
@@ -27,7 +29,7 @@
       <form [formGroup]="loginForm" *ngIf="!LoginContinue && !isPasswordVerified">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Email</mat-label>
-          <input matInput type="email" placeholder="employee@msquare.com" formControlName="gmail" />
+          <input matInput type="email" formControlName="gmail" />
           <mat-error *ngIf="loginForm.get('gmail')?.hasError('required') && loginForm.get('gmail')?.touched">
             Email is required
           </mat-error>
@@ -38,7 +40,7 @@
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Password</mat-label>
-          <input matInput type="password" placeholder="********" formControlName="password" />
+          <input matInput type="password" formControlName="password" />
           <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
             Password is required
           </mat-error>
@@ -63,7 +65,7 @@
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Enter 6-digit OTP</mat-label>
-          <input matInput type="text" placeholder="123456" formControlName="otp" maxlength="6" />
+          <input matInput type="text" formControlName="otp" maxlength="6" />
           <mat-error *ngIf="loginForm.get('otp')?.hasError('required') && loginForm.get('otp')?.touched">
             OTP is required
           </mat-error>

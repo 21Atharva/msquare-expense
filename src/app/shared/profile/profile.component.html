@@ -42,15 +42,15 @@
 
   <!-- Name & Username -->
 <!-- Row 1: Name and Username -->
-<div class="form-row">
-  <mat-form-field appearance="outline" class="half-width">
+<div class="form-row ">
+  <mat-form-field appearance="outline" class="half-width" >
     <mat-label>Full Name</mat-label>
-    <input matInput [(ngModel)]="newName" />
+    <input style="margin-top: 10px;" matInput [(ngModel)]="newName" />
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="half-width">
     <mat-label>Username</mat-label>
-    <input matInput [(ngModel)]="newUsername" />
+    <input style="margin-top: 10px;" matInput [(ngModel)]="newUsername" />
   </mat-form-field>
 </div>
 
@@ -58,12 +58,12 @@
 <div class="form-row">
   <mat-form-field appearance="outline" class="half-width">
     <mat-label>Email</mat-label>
-    <input matInput [(ngModel)]="profile.gmail" />
+    <input  style="margin-top: 10px;"matInput [(ngModel)]="profile.gmail" />
   </mat-form-field>
 
 <mat-form-field appearance="outline" class="half-width readonly-field">
   <mat-label>Role</mat-label>
-  <input matInput [(ngModel)]="profile.role" readonly />
+  <input style="margin-top: 10px;" matInput [(ngModel)]="profile.role" readonly />
 </mat-form-field>
 
 
@@ -73,7 +73,7 @@
 <div class="form-row">
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>Bio</mat-label>
-    <textarea matInput [(ngModel)]="profile.bio" rows="3"></textarea>
+    <textarea style="margin-top: 10px;" matInput [(ngModel)]="profile.bio" rows="3"></textarea>
   </mat-form-field>
 </div>
 <hr>

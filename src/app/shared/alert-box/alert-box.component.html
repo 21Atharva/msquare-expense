@@ -1,5 +1,5 @@
 <div *ngIf="type==='alert'">
-  <h1 mat-dialog-title>Leaving So Soon???</h1>
+  <h1 mat-dialog-title>Are you Sure?</h1>
   <div mat-dialog-content>Logged out for now, but the journey continues. See you soon! 👋😄</div>
   <div mat-dialog-actions align="end">
     <button mat-raised-button mat-dialog-close cdkFocusInitial>Stay</button>
@@ -102,7 +102,7 @@
 
 <div *ngIf="type === 'success'">
   <h1 mat-dialog-title>Success!</h1>
-  <div mat-dialog-content>Your leave application has been submitted successfully.</div>
+  <div mat-dialog-content>{{ message || 'Your leave application has been submitted successfully.' }}</div>
   <div mat-dialog-actions align="end">
     <button mat-raised-button color="primary" mat-dialog-close>OK</button>
   </div>
@@ -110,7 +110,7 @@
 
 <div *ngIf="type === 'error'">
   <h1 mat-dialog-title>Error!</h1>
-  <div mat-dialog-content>Failed to submit leave application. Please try again.</div>
+  <div mat-dialog-content>{{ message || 'Failed to submit leave application. Please try again.' }}</div>
   <div mat-dialog-actions align="end">
     <button mat-raised-button color="primary" mat-dialog-close>OK</button>
   </div>

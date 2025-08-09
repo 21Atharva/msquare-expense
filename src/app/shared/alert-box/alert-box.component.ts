@@ -12,6 +12,7 @@ import { environment } from 'src/environments/environment';
 })
 export class AlertBoxComponent implements OnInit{
   type:any;
+  message:any;
   isLoading:boolean=false;
   userId:any;
   isReadyToDeleteAccount=false;
@@ -28,6 +29,7 @@ export class AlertBoxComponent implements OnInit{
   
   ngOnInit(): void {
       this.type=this.data.type;
+      this.message=this.data.message;
       this.userId=sessionStorage.getItem('Id')?.split(' ')[1];
       // this.userEmailAddress=(this.authService.getEmail()==null)?localStorage.getItem('user_email'):this.authService.getEmail();
   }

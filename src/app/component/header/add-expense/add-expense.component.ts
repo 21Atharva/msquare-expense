@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -9,7 +9,7 @@ import { BusinessDataService } from 'src/app/services/business-data.service';
   templateUrl: './add-expense.component.html',
   styleUrls: ['./add-expense.component.scss'],
 })
-export class AddExpenseComponent implements OnInit {
+export class AddExpenseComponent implements OnInit, OnChanges {
   expenseForm!: FormGroup;
   
   isEdit = false;
@@ -31,6 +31,7 @@ export class AddExpenseComponent implements OnInit {
 
   imageFile: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
+  selectedFileName: string = '';
 
   constructor(
     public businessData: BusinessDataService,
@@ -39,26 +40,59 @@ export class AddExpenseComponent implements OnInit {
     public route: Router
   ) {}
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['tags'] && changes['tags'].currentValue) {
+      // Tags updated from parent component
+    }
+  }
+
   ngOnInit(): void {
     this.isSaving = false;
-     this.showLoader = true;
-    this.businessData.onGetAllCategory().subscribe((res: any) => {
-      this.keywords = res.data;
-    });
+    this.showLoader = true;
+    
+    // Initialize form first
+    this.initializeForm();
+    
+    // Load categories as fallback if not provided via @Input tags
+    if (!this.tags || this.tags.length === 0) {
+      this.businessData.onGetAllCategory().subscribe(
+        (res: any) => {
+          this.keywords = res.data;
+          // Add minimum loading time for better UX
+          setTimeout(() => {
+            this.showLoader = false;
+          }, 800);
+        },
+        (error) => {
+          console.error('Error loading categories:', error);
+          setTimeout(() => {
+            this.showLoader = false;
+          }, 800);
+        }
+      );
+    } else {
+      // Even if tags are provided, show loader for minimum time
+      setTimeout(() => {
+        this.showLoader = false;
+      }, 600);
+    }
+  }
 
+  initializeForm(): void {
     this.expenseForm = new FormGroup({
       name: new FormControl('', [
         Validators.required,
         Validators.maxLength(50),
         Validators.pattern('^[a-zA-Z ]*$')
       ]),
-        projectId: new FormControl ('', Validators.required),
-  projectName: new FormControl('', Validators.required),
+      projectId: new FormControl ('', Validators.required),
+      projectName: new FormControl('', Validators.required),
       amount: new FormControl('', Validators.required),
       expense_category: new FormControl('', Validators.required),
       payment: new FormControl('', Validators.required),
       expense_date: new FormControl('', Validators.required),
       comment: new FormControl(''),
+      requiresAdminApproval: new FormControl(false), // Same for both roles - unchecked by default
     });
 
     this.activateRoute.paramMap.subscribe((param: ParamMap) => {
@@ -68,7 +102,7 @@ export class AddExpenseComponent implements OnInit {
         this.prePopulate();
       } else {
         this.isEdit = false;
-         this.showLoader = false;
+        // Don't hide loader here - let category loading handle it
       }
     });
   }
@@ -86,7 +120,8 @@ export class AddExpenseComponent implements OnInit {
         this.isCategoryNotFound = index === -1;
 
         this.expenseForm.setValue({
-
+          projectId: res.data.projectId || '',
+          projectName: res.data.projectName || '',
           name: res.data.name,
           amount: res.data.amount,
           expense_date: new Date(year, month, day),
@@ -107,6 +142,12 @@ export class AddExpenseComponent implements OnInit {
     this.expenseForm.markAsUntouched();
     this.imageFile = null;
     this.imagePreview = null;
+    this.selectedFileName = '';
+    
+    // Reset admin approval to false for all users after reset
+    this.expenseForm.patchValue({
+      requiresAdminApproval: false
+    });
   }
 
   addEvent(event: any) {
@@ -118,6 +159,7 @@ export class AddExpenseComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       this.imageFile = file;
+      this.selectedFileName = file.name;
 
       const reader = new FileReader();
       reader.onload = () => {
@@ -142,6 +184,7 @@ export class AddExpenseComponent implements OnInit {
     formData.append('payment', this.expenseForm.value.payment);
     formData.append('expense_date', this.expenseForm.value.expense_date);
     formData.append('comment', this.expenseForm.value.comment);
+    formData.append('requiresAdminApproval', this.expenseForm.value.requiresAdminApproval);
 
     if (this.imageFile) {
       formData.append('receipt', this.imageFile);
@@ -151,8 +194,16 @@ export class AddExpenseComponent implements OnInit {
       next: (res: any) => {
         this.isSaving = false;
         if (res.status === true) {
-          this._snackBar.open('Expense Added with Image', '', { duration: 2000 });
+          const message = res.requiresApproval 
+            ? 'Expense submitted for admin approval!' 
+            : 'Expense Added Successfully!';
+          this._snackBar.open(message, '', { duration: 3000 });
           this.onReset();
+          
+          // Redirect to view-expenses after successful save
+          setTimeout(() => {
+            this.route.navigate(['/home']);
+          }, 1000); // Small delay to show the success message
         } else {
           this._snackBar.open('Error occurred! Please try again', '', { duration: 2000 });
         }

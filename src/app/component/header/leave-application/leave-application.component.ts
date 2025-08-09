@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { BusinessDataService } from 'src/app/services/business-data.service';
 import { AlertBoxComponent } from 'src/app/shared/alert-box/alert-box.component';
 import { ProfileComponent } from 'src/app/shared/profile/profile.component';
+import { LayoutConfig } from 'src/app/shared/layout/layout.interface';
 
 interface Leave {
   [key: string]: any;
@@ -17,10 +18,6 @@ interface Leave {
   totalDays?: number;
   leaveId?: string;
   createdAt?: string;
-  isStartHalfDay?: boolean;
-  startHalfDayType?: string;
-  isEndHalfDay?: boolean;
-  endHalfDayType?: string;
 }
 
 @Component({
@@ -29,6 +26,7 @@ interface Leave {
   styleUrls: ['./leave-application.component.scss']
 })
 export class LeaveApplicationComponent implements OnInit {
+  layoutConfig!: LayoutConfig;
   leaveForm!: FormGroup;
   totalLeaves = 24;
   minDate: string = '';
@@ -81,20 +79,26 @@ export class LeaveApplicationComponent implements OnInit {
       startDate: [new Date().toISOString().split('T')[0], Validators.required],
       endDate: [new Date().toISOString().split('T')[0], Validators.required],
       reason: ['', [Validators.required, Validators.maxLength(200)]],
-      isStartHalfDay: [false],
-      startHalfDayType: [''],
-      isEndHalfDay: [false],
-      endHalfDayType: [''],
+      halfDay: [false],
       attachment: [null]
     });
 
     this.leaveForm.valueChanges.subscribe(() => {
-      const { startDate, endDate } = this.leaveForm.value;
+      const { startDate, endDate, halfDay } = this.leaveForm.value;
       if (startDate && endDate) {
-        this.totalLeaveDays = this.calculateTotalLeaveDays(startDate, endDate);
+        this.totalLeaveDays = this.calculateTotalLeaveDays(startDate, endDate, halfDay);
         this.generateLeaveSummary();
       }
     });
+
+    // Initial calculation when component loads
+    setTimeout(() => {
+      const { startDate, endDate, halfDay } = this.leaveForm.value;
+      if (startDate && endDate) {
+        this.totalLeaveDays = this.calculateTotalLeaveDays(startDate, endDate, halfDay);
+        this.generateLeaveSummary();
+      }
+    }, 0);
 
     const gmail = localStorage.getItem('user_email');
     if (gmail) {
@@ -113,6 +117,7 @@ export class LeaveApplicationComponent implements OnInit {
         }
       });
     }
+    this.setupLayoutConfig();
   }
 
   isHoliday(date: Date): boolean {
@@ -140,13 +145,29 @@ export class LeaveApplicationComponent implements OnInit {
       : ['leaveType', 'startDate', 'endDate', 'status', 'reason'];
   }
 
-  calculateTotalLeaveDays(start: string, end: string): number {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
+  calculateTotalLeaveDays(start: string | Date, end: string | Date, isHalfDay: boolean = false): number {
+    // Normalize dates to ensure proper comparison
+    let startDate: Date, endDate: Date;
+    
+    if (start instanceof Date) {
+      startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    } else {
+      const startParts = start.split('-');
+      startDate = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
+    }
+    
+    if (end instanceof Date) {
+      endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    } else {
+      const endParts = end.split('-');
+      endDate = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]));
+    }
+    
     let count = 0;
-    const current = new Date(startDate);
+    const current = new Date(startDate.getTime());
 
-    while (current <= endDate) {
+    // Use date comparison with proper loop termination
+    while (current.getTime() <= endDate.getTime()) {
       const day = current.getDay();
       const isSaturday = day === 6;
       const isSunday = day === 0;
@@ -157,20 +178,12 @@ export class LeaveApplicationComponent implements OnInit {
         continue;
       }
 
-      if (
-        current.toDateString() === startDate.toDateString() &&
-        this.leaveForm.value.isStartHalfDay
-      ) {
-        count += 0.5;
-      } else if (
-        current.toDateString() === endDate.toDateString() &&
-        this.leaveForm.value.isEndHalfDay
-      ) {
-        count += 0.5;
-      } else if (isSaturday) {
+      // Saturday is always half day
+      if (isSaturday) {
         count += 0.5;
       } else {
-        count += 1;
+        // Apply half day logic for regular working days
+        count += isHalfDay ? 0.5 : 1;
       }
 
       current.setDate(current.getDate() + 1);
@@ -180,13 +193,34 @@ export class LeaveApplicationComponent implements OnInit {
   }
 
   generateLeaveSummary(): void {
-    const { startDate, endDate, isStartHalfDay, isEndHalfDay } = this.leaveForm.value;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const { startDate, endDate, halfDay } = this.leaveForm.value;
+    if (!startDate || !endDate) {
+      this.leaveSummary = [];
+      return;
+    }
+    
+    // Normalize dates to ensure proper comparison
+    let start: Date, end: Date;
+    
+    if (startDate instanceof Date) {
+      start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    } else {
+      const startParts = startDate.split('-');
+      start = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
+    }
+    
+    if (endDate instanceof Date) {
+      end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    } else {
+      const endParts = endDate.split('-');
+      end = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]));
+    }
+    
     const summary: { date: string, label: string, type: string }[] = [];
+    const current = new Date(start.getTime());
 
-    while (start <= end) {
-      const current = new Date(start);
+    // Use date comparison with proper loop termination
+    while (current.getTime() <= end.getTime()) {
       const day = current.getDay();
       const isSaturday = day === 6;
       const isSunday = day === 0;
@@ -209,36 +243,30 @@ export class LeaveApplicationComponent implements OnInit {
       } else if (isSaturday) {
         label = 'Half Day (Saturday)';
         type = 'yellow';
-      }
-
-      if (
-        current.toDateString() === new Date(startDate).toDateString() &&
-        isStartHalfDay &&
-        !isHoliday &&
-        !isSunday &&
-        !isSaturday
-      ) {
-        label = 'Half Day (Start)';
-        type = 'yellow';
-      }
-
-      if (
-        current.toDateString() === new Date(endDate).toDateString() &&
-        isEndHalfDay &&
-        !isHoliday &&
-        !isSunday &&
-        !isSaturday
-      ) {
-        label = 'Half Day (End)';
+      } else if (halfDay) {
+        // Apply half day to regular working days when checkbox is checked
+        label = 'Half Day';
         type = 'yellow';
       }
 
       summary.push({ date: dateLabel, label, type });
-      start.setDate(start.getDate() + 1);
+      current.setDate(current.getDate() + 1);
     }
 
     this.leaveSummary = summary;
   }
+
+  getFormattedDate(dateString: string): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
@@ -251,7 +279,7 @@ export class LeaveApplicationComponent implements OnInit {
   onSubmit(): void {
     if (this.leaveForm.valid) {
       const leaveData = this.leaveForm.value;
-      const totalDays = this.calculateTotalLeaveDays(leaveData.startDate, leaveData.endDate);
+      const totalDays = this.calculateTotalLeaveDays(leaveData.startDate, leaveData.endDate, leaveData.halfDay);
       const employeeId = localStorage.getItem('Id')?.trim();
       const emailId = localStorage.getItem('user_email') || '';
 
@@ -270,10 +298,6 @@ export class LeaveApplicationComponent implements OnInit {
       formData.append('startDate', leaveData.startDate);
       formData.append('endDate', leaveData.endDate);
       formData.append('reason', leaveData.reason);
-      formData.append('isStartHalfDay', leaveData.isStartHalfDay ? 'true' : 'false');
-      formData.append('startHalfDayType', leaveData.startHalfDayType || '');
-      formData.append('isEndHalfDay', leaveData.isEndHalfDay ? 'true' : 'false');
-      formData.append('endHalfDayType', leaveData.endHalfDayType || '');
       formData.append('totalDays', totalDays.toString());
 
       if (leaveData.attachment) {
@@ -282,15 +306,17 @@ export class LeaveApplicationComponent implements OnInit {
 
       this.businessData.applyLeave(formData).subscribe({
         next: (response) => {
-          this.dialog.open(AlertBoxComponent, {
+          const dialogRef = this.dialog.open(AlertBoxComponent, {
             width: '300px',
             data: { type: 'success', message: 'Leave application submitted successfully!' }
           });
-          this.leaveForm.reset();
-          this.selectedFileName = '';
-          this.totalLeaveDays = 0;
-          this.leaveSummary = [];
-          this.ngOnInit();
+          
+          dialogRef.afterClosed().subscribe(() => {
+            // Redirect to leave dashboard after dialog closes
+            this.onEmpDashboard();
+          });
+          
+          this.resetForm();
         },
         error: (err) => {
           const errorMessage = err?.error?.message || 'Failed to submit leave application. Please try again.';
@@ -339,7 +365,26 @@ export class LeaveApplicationComponent implements OnInit {
   }
 
   cancel(): void {
-    this.leaveForm.reset();
+    this.resetForm();
+  }
+
+  resetForm(): void {
+    this.leaveForm.reset({
+      leaveType: '',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+      reason: '',
+      halfDay: false,
+      attachment: null
+    });
+    
+    // Clear all validation states
+    this.leaveForm.markAsUntouched();
+    this.leaveForm.markAsPristine();
+    Object.keys(this.leaveForm.controls).forEach(key => {
+      this.leaveForm.get(key)?.setErrors(null);
+    });
+    
     this.selectedFileName = '';
     this.totalLeaveDays = 0;
     this.leaveSummary = [];
@@ -365,5 +410,75 @@ export class LeaveApplicationComponent implements OnInit {
 
   onEmpDashboard(): void {
     this.businessData.onNavigate('emp-dashboard');
+  }
+
+  onAdd(): void {
+    this.businessData.onNavigate('home');
+  }
+
+  onLeaveManagement(): void {
+    this.businessData.onNavigate('leave-management');
+  }
+
+  onAdminDashboard(): void {
+    this.businessData.onNavigate('admin-dashboard');
+  }
+
+  onPendingApprovals(): void {
+    this.businessData.onNavigate('pending-approvals');
+  }
+
+  // Check if current user is a manager
+  isManager(): boolean {
+    return localStorage.getItem('role') === 'manager';
+  }
+
+  private setupLayoutConfig() {
+    const userRole = localStorage.getItem('role') || 'employee';
+    
+    const employeeNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.openDialog(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => true },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const adminNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.openDialog(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Pending Approvals', icon: 'approval', action: () => this.onPendingApprovals(), isActive: () => false },
+      { label: 'Manage Employee Leaves', icon: 'assignment', action: () => this.onLeaveManagement(), isActive: () => false },
+      { label: 'Admin Dashboard', icon: 'dashboard', action: () => this.onAdminDashboard(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    const managerNavigationItems = [
+      { label: 'Profile', icon: 'perm_identity', action: () => this.openDialog(), isActive: () => false },
+      { label: 'View Expenses', icon: 'bar_chart', action: () => this.onView(), isActive: () => false },
+      { label: 'Add Expenses', icon: 'add', action: () => this.onAdd(), isActive: () => false },
+      { label: 'Leave Dashboard', icon: 'dashboard', action: () => this.onEmpDashboard(), isActive: () => false },
+      { label: 'Leave Application', icon: 'event_note', action: () => this.onLeaveApplication(), isActive: () => true },
+      { label: 'Manage Employee Leaves', icon: 'assignment', action: () => this.onLeaveManagement(), isActive: () => false },
+      { label: 'Logout', icon: 'logout', action: () => this.onLogout(), isActive: () => false }
+    ];
+
+    let navigationItems;
+    if (userRole === 'admin') {
+      navigationItems = adminNavigationItems;
+    } else if (userRole === 'manager') {
+      navigationItems = managerNavigationItems;
+    } else {
+      navigationItems = employeeNavigationItems;
+    }
+
+    this.layoutConfig = {
+      title: 'Msquare Portal',
+      logoPath: '../../../../assets/image/msquare.png',
+      navigationItems: navigationItems,
+      userRole: userRole
+    };
   }
 }

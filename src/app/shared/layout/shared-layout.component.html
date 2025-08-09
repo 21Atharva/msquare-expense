@@ -1,0 +1,77 @@
+<mat-drawer-container
+  class="example-container"
+  hasBackdrop="true"
+  autosize
+>
+  <mat-drawer style="height: 100%" #drawer class="example-sidenav" mode="over">
+    <img 
+      [src]="config.logoPath" 
+      alt="Msquare Engineers Logo" 
+      class="brand-logo" 
+    />
+
+    <h2
+      style="
+        border-bottom: 2px solid red;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      "
+    >
+      {{ config.title }}
+    </h2>
+
+    <div class="side-nav-list">
+      <ng-container *ngFor="let item of filteredNavigationItems">
+        <div class="nav-item" 
+             [class.active]="item.isActive && item.isActive()" 
+             (click)="item.action()">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </div>
+      </ng-container>
+    </div>
+
+    <div style="font-size: 12px; margin-top: 20px;">
+      <!-- Application Version can be added here if needed -->
+    </div>
+  </mat-drawer>
+
+  <div>
+    <mat-toolbar style="border-bottom: 1px solid black">
+      <button
+        mat-icon-button
+        class="example-icon"
+        (click)="drawer.toggle()"
+        aria-label="Toggle navigation menu"
+      >
+        <mat-icon>list</mat-icon>
+      </button>
+      <span>{{ config.title }}</span>
+      <span class="example-spacer"></span>
+      <button mat-raised-button color="accent" (click)="onLogout()">
+        <mat-icon>logout</mat-icon>Logout
+      </button>
+    </mat-toolbar>
+  </div>
+
+  <!-- Content projection area -->
+  <div class="main-content">
+    <ng-content></ng-content>
+  </div>
+
+  <!-- Optional floating action button -->
+  <div 
+    *ngIf="config.showFloatingButton" 
+    class="btns"
+    [matTooltip]="config.floatingButtonTooltip || 'Action'"
+    (click)="config.floatingButtonAction?.()"
+  >
+    <button mat-mini-fab color="accent">
+      <mat-icon>{{ config.floatingButtonIcon || 'add' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Footer projection area -->
+  <div class="footers">
+    <ng-content select="[slot=footer]"></ng-content>
+  </div>
+</mat-drawer-container> 

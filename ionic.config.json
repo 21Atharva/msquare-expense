@@ -1,5 +1,7 @@
 {
   "name": "Msquare",
-  "integrations": {},
+  "integrations": {
+    "capacitor": {}
+  },
   "type": "angular"
 }

@@ -41,20 +41,20 @@
         <div *ngIf="currentStep === 1">
           <mat-form-field appearance="outline" class="field">
             <mat-label>Full Name</mat-label>
-            <input matInput formControlName="name" placeholder="Full Name" />
+            <input matInput formControlName="name" />
             <mat-error *ngIf="signUpForm.get('name')?.hasError('required')">Full Name is required</mat-error>
             <mat-error *ngIf="signUpForm.get('name')?.hasError('pattern')">Only letters and spaces allowed</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="field">
             <mat-label>Username</mat-label>
-            <input matInput formControlName="username" placeholder="Username" />
+            <input matInput formControlName="username" />
             <mat-error *ngIf="signUpForm.get('username')?.hasError('required')">Username is required</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="field">
             <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="gmail" placeholder="abc@gmail.com" />
+            <input matInput type="email" formControlName="gmail" />
             <mat-error *ngIf="signUpForm.get('gmail')?.hasError('required')">Email is required</mat-error>
             <mat-error *ngIf="signUpForm.get('gmail')?.hasError('email')">Enter a valid email</mat-error>
           </mat-form-field>
@@ -64,14 +64,14 @@
         <div *ngIf="currentStep === 2">
           <mat-form-field appearance="outline" class="field">
             <mat-label>Password</mat-label>
-            <input matInput type="password" formControlName="password" placeholder="********" />
+            <input matInput type="password" formControlName="password" />
             <mat-error *ngIf="signUpForm.get('password')?.hasError('required')">Password is required</mat-error>
             <mat-error *ngIf="signUpForm.get('password')?.hasError('minlength')">Min 8 characters required</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="field">
             <mat-label>Set PIN</mat-label>
-            <input matInput type="password" maxlength="4" formControlName="pin" placeholder="4-digit PIN" />
+            <input matInput type="password" maxlength="4" formControlName="pin" />
             <mat-error *ngIf="signUpForm.get('pin')?.hasError('required')">PIN is required</mat-error>
             <mat-error *ngIf="signUpForm.get('pin')?.hasError('pattern')">PIN must be 4 digits</mat-error>
           </mat-form-field>
@@ -89,30 +89,7 @@
             <mat-error *ngIf="signUpForm.get('role')?.hasError('required')">Role is required</mat-error>
           </mat-form-field>
 
-          <!-- If role is EMPLOYEE -->
-        <mat-form-field *ngIf="signUpForm.get('role')?.value === 'employee'" appearance="outline" class="field">
-  <mat-label>Select Department</mat-label>
-  <mat-select formControlName="department">
-    <mat-option *ngFor="let dept of getUniqueManagerDepartments()" [value]="dept">
-      {{ dept }}
-    </mat-option>
-  </mat-select>
-  <mat-error *ngIf="signUpForm.get('department')?.hasError('required')">
-    Department is required
-  </mat-error>
-</mat-form-field>
 
-
-          <!-- If role is MANAGER -->
-          <mat-form-field *ngIf="signUpForm.get('role')?.value === 'manager'" appearance="outline" class="field">
-            <mat-label>Assign Department to Manage</mat-label>
-            <mat-select formControlName="department">
-              <mat-option *ngFor="let dept of departmentList" [value]="dept">
-                {{ dept }}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="signUpForm.get('department')?.hasError('required')">Department is required</mat-error>
-          </mat-form-field>
         </div>
 
         <!-- Buttons -->

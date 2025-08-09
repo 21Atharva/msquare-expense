@@ -1,0 +1,220 @@
+<app-shared-layout 
+  [config]="layoutConfig" 
+  (logoutEvent)="onLogout()"
+>
+  <!-- Pending Approvals Content -->
+  <div class="full-wrapper">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Pending Approvals</h1>
+      <p class="subtitle">Admin approval required for expenses and manager leaves</p>
+    </div>
+
+    <!-- ✅ Pending Expense Approvals Section -->
+    <div *ngIf="expenseTotalCount > 0 || pendingExpenses.length > 0" class="pending-section">
+      
+      <!-- Section Header with Search -->
+      <div class="section-header-with-search">
+        <div class="title-with-count">
+          <h2 class="section-title">Pending Expense Approvals</h2>
+          <span class="count-badge">{{ filteredExpenses.length }}</span>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-container">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search expenses...</mat-label>
+            <input matInput 
+                   [(ngModel)]="expenseSearchTerm" 
+                   (ngModelChange)="onExpenseSearch($event)"
+                   placeholder="Search by employee, expense, category, or project">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Expense Table -->
+      <div class="table-wrapper" *ngIf="getPaginatedExpenses().length > 0">
+        <table class="approval-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Expense</th>
+              <th>Amount</th>
+              <th>Category</th>
+              <th>Date</th>
+              <th>Project</th>
+              <th>Receipt</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let expense of getPaginatedExpenses()">
+              <td class="employee-name">{{ expense.userName }}</td>
+              <td>{{ expense.name }}</td>
+              <td class="amount">{{ expense.amount }}</td>
+              <td>{{ expense.expense_category }}</td>
+              <td>{{ expense.expense_date }}</td>
+              <td>{{ expense.projectName }}</td>
+              <td class="receipt-cell">
+                <button *ngIf="expense.image" 
+                        class="receipt-btn" 
+                        (click)="viewReceipt(expense.image)" 
+                        matTooltip="View Receipt">
+                  <mat-icon>receipt</mat-icon>
+                </button>
+                <span *ngIf="!expense.image" class="no-receipt">No Receipt</span>
+              </td>
+              <td class="actions-cell">
+                <button 
+                  mat-raised-button 
+                  color="warn" 
+                  (click)="rejectExpense(expense)"
+                  class="action-btn reject-btn">
+                  <mat-icon>close</mat-icon> Deny
+                </button>
+                <button 
+                  mat-raised-button 
+                  color="primary" 
+                  (click)="approveExpense(expense)"
+                  class="action-btn approve-btn">
+                  <mat-icon>check</mat-icon> Approve
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Results Message -->
+      <div *ngIf="getPaginatedExpenses().length === 0 && expenseSearchTerm" class="no-results">
+        <p>No expenses found matching "{{ expenseSearchTerm }}"</p>
+      </div>
+        
+      <!-- Expense Pagination -->
+      <div class="pagination-container" *ngIf="filteredExpenses.length > 0">
+        <div class="pagination-info">
+          <span class="showing-text">
+            Showing {{ (expensePageIndex * expensePageSize) + 1 }} - 
+            {{ Math.min((expensePageIndex + 1) * expensePageSize, filteredExpenses.length) }} 
+            of {{ filteredExpenses.length }} expenses
+          </span>
+        </div>
+        <mat-paginator
+          [length]="filteredExpenses.length"
+          [pageSize]="expensePageSize"
+          [pageIndex]="expensePageIndex"
+          [pageSizeOptions]="[5, 10, 20]"
+          (page)="onExpensePageChange($event)"
+          showFirstLastButtons
+          class="earthfit-paginator">
+        </mat-paginator>
+      </div>
+    </div>
+
+    <!-- ✅ Pending Manager Leave Approvals Section -->
+    <div *ngIf="leaveTotalCount > 0 || pendingManagerLeaves.length > 0" class="pending-section">
+      
+      <!-- Section Header with Search -->
+      <div class="section-header-with-search">
+        <div class="title-with-count">
+          <h2 class="section-title">Pending Manager Leave Approvals</h2>
+          <span class="count-badge">{{ filteredManagerLeaves.length }}</span>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-container">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search leaves...</mat-label>
+            <input matInput 
+                   [(ngModel)]="leaveSearchTerm" 
+                   (ngModelChange)="onLeaveSearch($event)"
+                   placeholder="Search by manager, leave type, or reason">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Leave Table -->
+      <div class="table-wrapper" *ngIf="getPaginatedManagerLeaves().length > 0">
+        <table class="approval-table">
+          <thead>
+            <tr>
+              <th>Manager</th>
+              <th>Leave Type</th>
+              <th>Date Range</th>
+              <th>Days</th>
+              <th>Reason</th>
+              <th>Applied</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let leave of getPaginatedManagerLeaves()">
+              <td class="employee-name">{{ leave.employeeName }}</td>
+              <td>{{ leave.leaveType }}</td>
+              <td>{{ formatDateRange(leave.startDate, leave.endDate) }}</td>
+              <td class="days">{{ leave.totalDays }}</td>
+              <td class="reason" matTooltip="{{ leave.reason }}">
+                {{ leave.reason.length > 30 ? leave.reason.substring(0, 30) + '...' : leave.reason }}
+              </td>
+              <td>{{ formatDate(leave.createdAt) }}</td>
+              <td class="actions-cell">
+                <button 
+                  mat-raised-button 
+                  color="warn" 
+                  (click)="rejectManagerLeave(leave)"
+                  class="action-btn reject-btn">
+                  <mat-icon>close</mat-icon> Deny
+                </button>
+                <button 
+                  mat-raised-button 
+                  color="primary" 
+                  (click)="approveManagerLeave(leave)"
+                  class="action-btn approve-btn">
+                  <mat-icon>check</mat-icon> Approve
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Results Message -->
+      <div *ngIf="getPaginatedManagerLeaves().length === 0 && leaveSearchTerm" class="no-results">
+        <p>No leaves found matching "{{ leaveSearchTerm }}"</p>
+      </div>
+
+      <!-- Leave Pagination -->
+      <div class="pagination-container" *ngIf="filteredManagerLeaves.length > 0">
+        <div class="pagination-info">
+          <span class="showing-text">
+            Showing {{ (leavePageIndex * leavePageSize) + 1 }} - 
+            {{ Math.min((leavePageIndex + 1) * leavePageSize, filteredManagerLeaves.length) }} 
+            of {{ filteredManagerLeaves.length }} leaves
+          </span>
+        </div>
+        <mat-paginator
+          [length]="filteredManagerLeaves.length"
+          [pageSize]="leavePageSize"
+          [pageIndex]="leavePageIndex"
+          [pageSizeOptions]="[5, 10, 20]"
+          (page)="onLeavePageChange($event)"
+          showFirstLastButtons
+          class="leave-paginator">
+        </mat-paginator>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="pendingExpenses.length === 0 && pendingManagerLeaves.length === 0" class="empty-state">
+      <div class="empty-state-content">
+        <mat-icon class="empty-icon">task_alt</mat-icon>
+        <h3>No Pending Approvals</h3>
+        <p>All expenses and manager leaves have been processed.</p>
+      </div>
+    </div>
+
+  </div>
+</app-shared-layout>

@@ -1,3 +1,49 @@
+// Remove borders from the main card
+.example-card {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+  
+  .mat-mdc-card {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent;
+  }
+}
+
+// Remove borders from form fields
+.mat-mdc-form-field {
+  border: none !important;
+  
+  .mat-mdc-form-field-outline {
+    border: none !important;
+  }
+  
+  .mat-mdc-form-field-outline-start,
+  .mat-mdc-form-field-outline-end,
+  .mat-mdc-form-field-outline-gap {
+    border: none !important;
+  }
+}
+
+// Remove any other card borders
+mat-card {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+// Remove form field appearance borders
+.mat-form-field-appearance-outline {
+  .mat-form-field-outline {
+    border: none !important;
+  }
+  
+  .mat-form-field-outline-thick {
+    border: none !important;
+  }
+}
+
 .main-class {
   margin: 0 60px;
   padding-top: 50px;
@@ -52,9 +98,15 @@
   }
 
   .file-name {
-    margin-top: 8px;
-    font-weight: bold;
-    color: #555;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background-color: #e8f5e8;
+    border: 1px solid #4caf50;
+    border-radius: 6px;
+    font-weight: 500;
+    color: #2e7d32;
+    font-size: 13px;
+    display: inline-block;
   }
 }
 
@@ -65,3 +117,5 @@
   margin-bottom: 20px;
   background: transparent;
 }
+
+

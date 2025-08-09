@@ -1,53 +1,46 @@
 .signup-card-wrapper {
   display: flex;
-  height: 91vh;
-  background-color: #f0f4f8;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-
-    .left-panel,
-    .signup-card {
-      width: 100%;
-      border-radius: 0;
-    }
-
-    .form-card {
-      border-radius: 0;
-      box-shadow: none;
-    }
-  }
+  min-height: 100vh;
+  height: 100vh;
+  background: linear-gradient(135deg, #ffffff 0%, #f1efff  100%);
+  font-family: 'Poppins', sans-serif;
+  overflow: hidden;
+  gap: 0; /* Ensure no gaps between panels */
 }
 
 /* Left panel */
 .left-panel {
   width: 50%;
-  padding: 80px 60px;
-  background-color: #e3f2fd;
+  padding: var(--spacing-xxl) var(--spacing-xl);
   color: #0d47a1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center; 
+  text-align: center;
+  margin: 0;
+  border: none;
 
   .brand-title {
-    font-size: 36px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.2;
   }
 
   .tagline {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-style: italic;
-    margin-bottom: 15px;
-    margin-top: 15px;
+    margin-bottom: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    font-weight: 500;
   }
 
   .description {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     max-width: 450px;
-    line-height: 1.5;
+    line-height: 1.6;
+    opacity: 0.9;
   }
 }
 
@@ -57,117 +50,165 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: var(--spacing-md);
+  margin: 0;
+  border: none;
 }
 
 /* Actual card box */
 .form-card {
   width: 100%;
   max-width: 420px;
-  padding: 40px 32px;
+  padding: var(--spacing-lg) var(--spacing-md);
   background-color: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s ease;
+  height: fit-content;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
+.form-card:hover {
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
 
 .brand-logo {
-  max-width: 200px;
+  max-width: 160px;
   height: auto;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-md);
   background: transparent;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Inner card styles */
 .title {
   text-align: center;
-  font-size: 24px;
-  // font-weight: 600;
-  margin-bottom: 24px;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
   color: #0d47a1;
+  line-height: 1.3;
 }
 
 .stepper {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--spacing-lg);
+  padding: 0 var(--spacing-sm);
 
   .step {
     text-align: center;
     flex: 1;
+    position: relative;
 
     .circle {
       width: 32px;
       height: 32px;
       line-height: 32px;
       border-radius: 50%;
-      background-color: #ccc;
-      color: white;
+      background-color: #e0e0e0;
+      color: #666;
       margin: auto;
       font-weight: 600;
+      font-size: var(--font-size-xs);
+      transition: all 0.3s ease;
+      border: 2px solid #e0e0e0;
     }
 
     .label {
-      margin-top: 6px;
-      font-size: 12px;
+      margin-top: var(--spacing-xs);
+      font-size: 10px;
       color: #888;
+      font-weight: 500;
+      transition: all 0.3s ease;
     }
 
     &.active .circle {
-      background-color: #4f5eb4;
+      background-color: #3f51b5;
+      color: white;
+      border-color: #3f51b5;
+      transform: scale(1.1);
     }
 
     &.active .label {
-      color: #4f5eb4;
+      color: #3f51b5;
       font-weight: 600;
     }
 
     &.completed .circle {
-      background-color: #4f5eb4;
+      background-color: #4caf50;
+      color: white;
+      border-color: #4caf50;
     }
 
     &.completed .label {
-      color: #4f5eb4;
+      color: #4caf50;
       font-weight: 600;
     }
   }
 
   .line {
-    flex: 0 0 16px;
-    height: 2px;
-    background-color: #ccc;
-    margin: 0 4px;
+    flex: 0 0 24px;
+    height: 3px;
+    background-color: #e0e0e0;
+    margin: 0 var(--spacing-xs);
+    border-radius: 2px;
+    transition: all 0.3s ease;
 
     &.completed {
-      background-color: #4f5eb4;
+      background-color: #4caf50;
     }
   }
 }
 
 .field {
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-md);
+}
+
+.field input,
+.field mat-select {
+  font-size: 16px; /* Prevent zoom on iOS */
+  min-height: var(--touch-target-min);
 }
 
 .btns {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
 
   button {
     flex: 1;
+    min-height: var(--touch-target-mobile);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(63, 81, 181, 0.3);
   }
 }
 
 .loading-button {
   width: 100%;
-  background: #ccc;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
+  background: #ccc !important;
+  color: white !important;
+  padding: var(--spacing-md) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  min-height: var(--touch-target-mobile) !important;
+  cursor: not-allowed !important;
 }
 
 .spinner {
@@ -178,7 +219,7 @@
   border-radius: 50%;
   display: inline-block;
   animation: spin 0.75s linear infinite;
-  margin-right: 8px;
+  margin-right: var(--spacing-sm);
   vertical-align: middle;
 }
 
@@ -190,18 +231,425 @@
 
 .auth-switch {
   text-align: center;
-  margin-top: 20px;
-  font-size: 14px;
+  margin-top: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: #666;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid #f0f0f0;
 }
 
 .auth-switch a {
   color: #0d47a1;
-  font-weight: 500;
-  margin-left: 5px;
+  font-weight: 600;
+  margin-left: var(--spacing-xs);
   cursor: pointer;
   text-decoration: none;
+  transition: color 0.3s ease;
 }
 
 .auth-switch a:hover {
+  color: #1976d2;
   text-decoration: underline;
+}
+
+/* TABLET RESPONSIVE (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .signup-card-wrapper {
+    min-height: 100vh;
+  }
+
+  .left-panel {
+    padding: var(--spacing-xl) var(--spacing-lg);
+
+    .brand-title {
+      font-size: calc(var(--font-size-xxl) * 0.9);
+    }
+
+    .tagline {
+      font-size: var(--font-size-base);
+    }
+
+    .description {
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  .signup-card {
+    padding: var(--spacing-md);
+  }
+
+  .form-card {
+    max-width: 400px;
+    padding: var(--spacing-lg);
+  }
+
+  .brand-logo {
+    max-width: 180px;
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+  }
+
+  .stepper {
+    margin-bottom: var(--spacing-lg);
+
+    .step .circle {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+    }
+  }
+}
+
+/* MOBILE RESPONSIVE (≤767px) */
+@media (max-width: 767px) {
+  .signup-card-wrapper {
+    flex-direction: column;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffffff 0%, #f3e5f5 100%); /* Uniform background */
+  }
+
+  .left-panel {
+    display: none; /* Hide the entire left panel on mobile */
+  }
+
+  .signup-card {
+    width: 100%;
+    padding: var(--spacing-lg) var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 400px;
+    padding: var(--spacing-xl) var(--spacing-lg);
+    margin: auto;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    background: white;
+    
+    /* Center the logo better */
+    .brand-logo {
+      max-width: 140px;
+      margin-bottom: var(--spacing-lg);
+    }
+  }
+
+  .brand-logo {
+    max-width: 150px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .stepper {
+    margin-bottom: var(--spacing-lg);
+    padding: 0 var(--spacing-sm);
+
+    .step .circle {
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      font-size: var(--font-size-xs);
+    }
+
+    .step .label {
+      font-size: var(--font-size-xs);
+      margin-top: var(--spacing-xs);
+    }
+
+    .line {
+      flex: 0 0 16px;
+      margin: 0 var(--spacing-xs);
+    }
+  }
+
+  .field {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .field input,
+  .field mat-select {
+    font-size: 16px !important;
+    padding: var(--spacing-md) !important;
+    min-height: var(--touch-target-mobile) !important;
+  }
+
+  .btns {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+
+    button {
+      width: 100%;
+      min-height: var(--touch-target-mobile) !important;
+      padding: var(--spacing-md) var(--spacing-lg) !important;
+      font-size: var(--font-size-base) !important;
+    }
+  }
+
+  .auth-switch {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+  }
+}
+
+/* VERY SMALL MOBILE (≤480px) */
+@media (max-width: 480px) {
+  .signup-card {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+
+  .form-card {
+    max-width: 350px;
+    padding: var(--spacing-lg) var(--spacing-md);
+    border-radius: 12px;
+    
+    .brand-logo {
+      max-width: 120px;
+    }
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .stepper {
+    margin-bottom: var(--spacing-md);
+    padding: 0;
+
+    .step .circle {
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      font-size: 10px;
+    }
+
+    .step .label {
+      font-size: 10px;
+      margin-top: var(--spacing-xs);
+    }
+
+    .line {
+      flex: 0 0 12px;
+    }
+  }
+
+  .field {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .btns {
+    margin-top: var(--spacing-md);
+  }
+
+  .btns button {
+    padding: var(--spacing-md) var(--spacing-lg) !important;
+    font-size: var(--font-size-base) !important;
+    min-height: var(--touch-target-mobile) !important;
+  }
+
+  .auth-switch {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+  }
+}
+
+/* Enhanced accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .form-card,
+  .btns button,
+  .stepper .step .circle,
+  .stepper .step .label,
+  .stepper .line {
+    transition: none;
+  }
+
+  .form-card:hover,
+  .btns button:hover {
+    transform: none;
+  }
+
+  .stepper .step.active .circle {
+    transform: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .form-card {
+    border: 3px solid currentColor;
+  }
+
+  .stepper .step .circle {
+    border: 3px solid currentColor;
+  }
+
+  .btns button {
+    border: 2px solid currentColor;
+  }
+
+  .auth-switch {
+    border-top: 3px solid currentColor;
+  }
+}
+
+/* Focus improvements */
+.btns button:focus {
+  outline: 2px solid #ff4081;
+  outline-offset: 2px;
+}
+
+/* Form validation improvements */
+.mat-form-field-invalid .mat-form-field-outline-thick {
+  color: #f44336 !important;
+}
+
+.mat-error {
+  font-size: var(--font-size-xs) !important;
+  margin-top: var(--spacing-xs) !important;
+}
+
+/* Remove 16px padding from all text boxes in signup component */
+.mat-form-field-infix {
+  padding: 0 !important;
+}
+
+.mat-form-field-wrapper {
+  padding-bottom: 0 !important;
+}
+
+.mat-form-field-flex {
+  padding: 0 !important;
+}
+
+.mat-form-field-outline .mat-form-field-infix {
+  padding: 8px 0 !important;
+}
+
+.mat-input-element {
+  padding: 0 !important;
+}
+
+input.mat-input-element {
+  padding: 0 !important;
+}
+
+textarea.mat-input-element {
+  padding: 0 !important;
+}
+
+input[matInput] {
+  padding: 0 !important;
+}
+
+.mat-select {
+  padding: 0 !important;
+}
+
+/* MDC-specific overrides for Material Design Components */
+.mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+  min-height: 48px !important;
+}
+
+.mat-mdc-text-field-wrapper {
+  padding: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+}
+
+.mat-mdc-form-field-outline .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+}
+
+.mat-mdc-input-element {
+  padding: 8px 0 !important;
+}
+
+/* Target the specific MDC input classes */
+.mdc-text-field__input {
+  padding: 8px 0 !important;
+  height: auto !important;
+}
+
+.mdc-notched-outline .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+}
+
+/* MDC Select overrides */
+.mat-mdc-select {
+  padding: 8px 0 !important;
+}
+
+.mdc-select__anchor {
+  padding: 0 12px !important;
+}
+
+/* Fix label positioning - default state */
+.mat-mdc-floating-label {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* Floating label when focused or has value - moves to top */
+.mat-mdc-form-field.mat-focused .mat-mdc-floating-label,
+.mat-mdc-form-field.mat-form-field-should-float .mat-mdc-floating-label,
+.mat-mdc-form-field .mdc-floating-label--float-above {
+  top: -8px !important;
+  transform: translateY(0) scale(0.75) !important;
+  background: white !important;
+  padding: 0 4px !important;
+  z-index: 2 !important;
+}
+
+.mat-mdc-form-field-has-icon-prefix .mat-mdc-floating-label {
+  left: 48px !important;
+}
+
+/* Ensure proper spacing for outline appearance */
+.mat-mdc-form-field-appearance-outline .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+  min-height: 48px !important;
+}
+
+/* Fix text alignment */
+.mat-mdc-form-field .mat-mdc-form-field-infix input {
+  line-height: normal !important;
+}
+
+/* Fix notched outline for floating labels */
+.mat-mdc-form-field-appearance-outline .mdc-notched-outline .mdc-notched-outline__notch {
+  border-top: none !important;
+}
+
+.mat-mdc-form-field-appearance-outline.mat-focused .mdc-notched-outline__notch,
+.mat-mdc-form-field-appearance-outline.mat-form-field-should-float .mdc-notched-outline__notch {
+  border-top: none !important;
+}
+
+/* Better spacing for form fields on mobile */
+@media (max-width: 767px) {
+  .mat-form-field-appearance-outline .mat-form-field-infix {
+    padding: 8px 0 !important;
+  }
+
+  .mat-form-field-appearance-outline .mat-form-field-label {
+    top: 1.84375em !important;
+  }
 }

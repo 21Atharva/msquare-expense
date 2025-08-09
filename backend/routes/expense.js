@@ -74,7 +74,10 @@ router.get("/GET_ALL_EXPENSE/:id", authMiddleware, async (req, res) => {
     const user = await UserModel.findOne({ _id: req.params.id });
     const baseURL = "http://localhost:3000/";
 
-    const formattedExpenses = user.expenses.map((expense) => {
+    // Filter only approved expenses for dashboard view
+    const approvedExpenses = user.expenses.filter(expense => expense.approvalStatus === 'approved');
+    
+    const formattedExpenses = approvedExpenses.map((expense) => {
       return {
         ...expense.toObject(),
         expense_date: new Date(expense.expense_date).toDateString(),
@@ -135,7 +138,8 @@ router.post('/CREATE_EXPENSE_WITH_IMAGE/:id', authMiddleware, upload.single('rec
       comment,
       expense_date,
       projectId,
-      projectName
+      projectName,
+      requiresAdminApproval
     } = req.body;
 
     const newExpense = {
@@ -148,7 +152,9 @@ router.post('/CREATE_EXPENSE_WITH_IMAGE/:id', authMiddleware, upload.single('rec
       creater: req.params.id,
       projectId,
       projectName,
-      image: req.file ? `uploads/${req.file.filename}` : null
+      image: req.file ? `uploads/${req.file.filename}` : null,
+      requiresAdminApproval: requiresAdminApproval === 'true',
+      approvalStatus: requiresAdminApproval === 'true' ? 'pending' : 'approved'
     };
 
     await UserModel.updateOne(
@@ -156,9 +162,14 @@ router.post('/CREATE_EXPENSE_WITH_IMAGE/:id', authMiddleware, upload.single('rec
       { $push: { expenses: newExpense } }
     );
 
+    const message = requiresAdminApproval === 'true' 
+      ? 'Expense submitted for admin approval'
+      : 'Expense with image saved successfully';
+      
     res.status(200).json({
-      message: 'Expense with image saved successfully',
+      message: message,
       status: true,
+      requiresApproval: requiresAdminApproval === 'true'
     });
   } catch (err) {
     console.error(err);
@@ -201,6 +212,121 @@ router.get("/allEmpExpenses", async (req, res) => {
     res.status(500).json({
       message: "Internal server error",
       status: false
+    });
+  }
+});
+
+// Get all pending expenses for admin approval with pagination
+router.get("/PENDING_EXPENSES", authMiddleware, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+    
+    // Use aggregation to properly get ALL pending expenses from all users
+    const result = await UserModel.aggregate([
+      // Unwind the expenses array
+      { $unwind: "$expenses" },
+      // Match only pending expenses
+      { $match: { "expenses.approvalStatus": "pending" } },
+      // Add user info to each expense
+      {
+        $project: {
+          _id: "$expenses._id",
+          name: "$expenses.name",
+          amount: "$expenses.amount",
+          expense_date: "$expenses.expense_date",
+          expense_category: "$expenses.expense_category",
+          payment: "$expenses.payment",
+          comment: "$expenses.comment",
+          projectId: "$expenses.projectId",
+          projectName: "$expenses.projectName",
+          image: "$expenses.image",
+          createdAt: "$expenses.createdAt",
+          requiresAdminApproval: "$expenses.requiresAdminApproval",
+          approvalStatus: "$expenses.approvalStatus",
+          userName: "$name",
+          userUsername: "$username",
+          userId: "$_id"
+        }
+      },
+      // Sort by creation date (newest first)
+      { $sort: { createdAt: -1 } }
+    ]);
+    
+    // Calculate total count for pagination
+    const totalExpenses = result.length;
+    const totalPages = Math.ceil(totalExpenses / limit);
+    
+    // Apply pagination
+    const paginatedExpenses = result.slice(skip, skip + limit);
+    
+    res.status(200).json({
+      message: 'Pending expenses retrieved',
+      status: true,
+      data: paginatedExpenses,
+      pagination: {
+        page: page,
+        limit: limit,
+        totalExpenses: totalExpenses,
+        totalPages: totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: 'Internal Server Error',
+      status: false,
+    });
+  }
+});
+
+// Approve or reject an expense
+router.post("/APPROVE_EXPENSE", authMiddleware, async (req, res) => {
+  try {
+    const { userId, expenseId, action, rejectionReason } = req.body;
+    const adminId = req.userData.userId;
+    
+    const updateData = {
+      approvalStatus: action, // 'approved' or 'rejected'
+      approvedBy: adminId,
+      approvedAt: new Date()
+    };
+    
+    if (action === 'rejected' && rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    }
+    
+    // Create proper update object that only updates approval fields
+    const updateFields = {};
+    for (const [key, value] of Object.entries(updateData)) {
+      updateFields[`expenses.$.${key}`] = value;
+    }
+    
+    const result = await UserModel.updateOne(
+      { _id: userId, "expenses._id": expenseId },
+      { $set: updateFields }
+    );
+    
+    if (result.modifiedCount > 0) {
+      const actionText = action === 'approved' ? 'approved' : 'rejected';
+      res.status(200).json({
+        message: `Expense ${actionText} successfully`,
+        status: true,
+      });
+    } else {
+      res.status(404).json({
+        message: 'Expense not found',
+        status: false,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: 'Internal Server Error',
+      status: false,
     });
   }
 });

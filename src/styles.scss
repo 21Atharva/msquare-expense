@@ -2,5 +2,723 @@
 
 @import "@angular/material/prebuilt-themes/indigo-pink.css";
 @import "node_modules/bootstrap/dist/css/bootstrap.css";
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Ensure Material Icons font is available with multiple fallbacks */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/materialicons/v139/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2'),
+       url(https://fonts.gstatic.com/s/materialicons/v139/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff) format('woff');
+  font-display: swap;
+}
+
+/* CSS Custom Properties for Responsive Design */
+:root {
+  /* Breakpoints */
+  --mobile-max: 767px;
+  --tablet-min: 768px;
+  --tablet-max: 1024px;
+  --desktop-min: 1025px;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-xxl: 3rem;
+  
+  /* Typography */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-xxl: 1.5rem;
+  
+  /* Touch targets */
+  --touch-target-min: 44px;
+  --touch-target-mobile: 48px;
+  
+  /* Container widths */
+  --container-mobile: 100%;
+  --container-tablet: 95%;
+  --container-desktop: 90%;
+  
+  /* Z-index scale */
+  --z-drawer: 1000;
+  --z-overlay: 1100;
+  --z-modal: 1200;
+  --z-tooltip: 1300;
+}
+
+/* Apply Poppins font to all elements with highest priority */
+* {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* Material Icons - Override all font settings with maximum specificity */
+.material-icons,
+.mat-icon,
+mat-icon,
+[class*="material-icons"],
+.mat-icon-button .mat-icon,
+.mat-fab .mat-icon,
+.mat-mini-fab .mat-icon,
+button .mat-icon,
+.mat-button .mat-icon,
+.mat-raised-button .mat-icon,
+.mat-stroked-button .mat-icon,
+.mat-flat-button .mat-icon,
+mat-icon.mat-icon,
+.mat-icon.material-icons {
+  font-family: 'Material Icons' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+  word-wrap: normal !important;
+  direction: ltr !important;
+  -webkit-font-feature-settings: 'liga' !important;
+  -webkit-font-smoothing: antialiased !important;
+  text-rendering: optimizeLegibility !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  font-feature-settings: 'liga' !important;
+  /* Ensure icons are visible and properly sized */
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  vertical-align: middle !important;
+}
+
+/* Specific override for inline style conflicts */
+[style*="font-family"] .mat-icon,
+[style*="font-family"] mat-icon {
+  font-family: 'Material Icons' !important;
+}
+
+/* Override body and html font */
+html, body {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* Override Material Design typography with highest specificity */
+body.mat-typography,
+.mat-typography,
+.mat-app-background,
+body.mat-typography *,
+.mat-typography *,
+.mat-app-background * {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* Override Angular Material components */
+.mat-button, .mat-raised-button, .mat-icon-button, .mat-stroked-button,
+.mat-flat-button, .mat-fab, .mat-mini-fab, .mat-button-toggle,
+.mat-form-field, .mat-input-element, .mat-select, .mat-option,
+.mat-table, .mat-header-cell, .mat-cell, .mat-header-row, .mat-row,
+.mat-card, .mat-card-title, .mat-card-content, .mat-card-subtitle,
+.mat-list, .mat-list-item, .mat-nav-list, .mat-menu-item,
+.mat-tab-label, .mat-tab-body, .mat-toolbar, .mat-sidenav,
+.mat-dialog-title, .mat-dialog-content, .mat-snack-bar-container,
+h1, h2, h3, h4, h5, h6, p, span, div, label, button, input, textarea, select {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+html, body { 
+  height: 100%; 
+  margin: 0; 
+  padding: 0;
+  font-family: 'Poppins', sans-serif !important;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Global responsive utilities */
+.container-responsive {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.hide-mobile {
+  display: block;
+}
+
+.hide-tablet {
+  display: block;
+}
+
+.hide-desktop {
+  display: block;
+}
+
+.show-mobile {
+  display: none;
+}
+
+.show-tablet {
+  display: none;
+}
+
+.show-desktop {
+  display: none;
+}
+
+/* Mobile First Media Queries */
+@media (max-width: 767px) {
+  :root {
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1rem;
+    --spacing-xl: 1.25rem;
+    --font-size-base: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .show-mobile {
+    display: block !important;
+  }
+  
+  .container-responsive {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  /* Mobile-friendly form elements */
+  .mat-form-field {
+    width: 100% !important;
+    margin-bottom: var(--spacing-md) !important;
+  }
+  
+  .mat-form-field input,
+  .mat-form-field textarea,
+  .mat-select {
+    font-size: 16px !important; /* Prevent zoom */
+    min-height: var(--touch-target-mobile) !important;
+  }
+  
+  /* Mobile-friendly buttons */
+  .mat-button,
+  .mat-raised-button,
+  .mat-stroked-button,
+  .mat-flat-button {
+    min-height: var(--touch-target-mobile) !important;
+    padding: var(--spacing-md) var(--spacing-lg) !important;
+    font-size: var(--font-size-base) !important;
+  }
+  
+  /* Mobile toolbar adjustments */
+  .mat-toolbar {
+    padding: 0 var(--spacing-sm) !important;
+    min-height: 56px !important;
+  }
+  
+  .mat-toolbar-row {
+    padding: 0 var(--spacing-sm) !important;
+  }
+  
+  /* Mobile drawer adjustments */
+  .mat-drawer {
+    width: 280px !important;
+    max-width: 85vw !important;
+  }
+  
+  /* Mobile card adjustments */
+  .mat-card {
+    margin: var(--spacing-sm) !important;
+    padding: var(--spacing-md) !important;
+  }
+  
+  .mat-card-header {
+    padding: var(--spacing-md) 0 !important;
+  }
+  
+  .mat-card-content {
+    padding: var(--spacing-md) 0 !important;
+  }
+  
+  .mat-card-actions {
+    padding: var(--spacing-md) 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Mobile table improvements */
+  .mat-table {
+    font-size: var(--font-size-sm) !important;
+  }
+  
+  .mat-header-cell,
+  .mat-cell {
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+  }
+  
+  /* Mobile dialog adjustments */
+  .mat-dialog-container {
+    padding: var(--spacing-md) !important;
+    margin: var(--spacing-md) !important;
+    max-width: calc(100vw - 2rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .hide-tablet {
+    display: none !important;
+  }
+  
+  .show-tablet {
+    display: block !important;
+  }
+  
+  .container-responsive {
+    padding: 0 var(--spacing-lg);
+  }
+  
+  /* Tablet-specific adjustments */
+  .mat-drawer {
+    width: 320px !important;
+  }
+  
+  .mat-card {
+    margin: var(--spacing-md) !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  .hide-desktop {
+    display: none !important;
+  }
+  
+  .show-desktop {
+    display: block !important;
+  }
+  
+  /* Desktop-specific adjustments */
+  .mat-drawer {
+    width: 350px !important;
+  }
+}
+
+/* Global flex utilities */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-center {
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  justify-content: space-between;
+}
+
+.flex-around {
+  justify-content: space-around;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* Global spacing utilities */
+.m-0 { margin: 0 !important; }
+.m-1 { margin: var(--spacing-xs) !important; }
+.m-2 { margin: var(--spacing-sm) !important; }
+.m-3 { margin: var(--spacing-md) !important; }
+.m-4 { margin: var(--spacing-lg) !important; }
+.m-5 { margin: var(--spacing-xl) !important; }
+
+.p-0 { padding: 0 !important; }
+.p-1 { padding: var(--spacing-xs) !important; }
+.p-2 { padding: var(--spacing-sm) !important; }
+.p-3 { padding: var(--spacing-md) !important; }
+.p-4 { padding: var(--spacing-lg) !important; }
+.p-5 { padding: var(--spacing-xl) !important; }
+
+/* Text utilities */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+.text-xs { font-size: var(--font-size-xs) !important; }
+.text-sm { font-size: var(--font-size-sm) !important; }
+.text-base { font-size: var(--font-size-base) !important; }
+.text-lg { font-size: var(--font-size-lg) !important; }
+.text-xl { font-size: var(--font-size-xl) !important; }
+
+/* Width utilities */
+.w-full { width: 100% !important; }
+.h-full { height: 100% !important; }
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Scroll improvements for mobile */
+@media (max-width: 767px) {
+  .mat-drawer-content {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Improve touch scrolling */
+  .scrollable {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Better tap highlighting */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .mat-button,
+  .mat-raised-button,
+  .mat-stroked-button,
+  .mat-flat-button {
+    border: 2px solid currentColor !important;
+  }
+}
+
+/* Remove 16px padding from all text boxes globally */
+.mat-form-field-infix {
+  padding: 0 !important;
+}
+
+.mat-form-field-wrapper {
+  padding-bottom: 0 !important;
+}
+
+.mat-form-field-flex {
+  padding: 0 !important;
+}
+
+.mat-form-field-outline .mat-form-field-infix {
+  padding: 8px 0 !important;
+}
+
+.mat-input-element {
+  padding: 0 !important;
+}
+
+/* Override Material input padding globally */
+input.mat-input-element {
+  padding: 0 !important;
+}
+
+textarea.mat-input-element {
+  padding: 0 !important;
+}
+
+/* Remove padding from select elements */
+.mat-select {
+  padding: 0 !important;
+}
+
+/* Remove padding from form field containers */
+.mat-form-field-appearance-outline .mat-form-field-infix {
+  padding: 8px 0 !important;
+}
+
+.mat-form-field-appearance-fill .mat-form-field-infix {
+  padding: 8px 0 !important;
+}
+
+.mat-form-field-appearance-standard .mat-form-field-infix {
+  padding: 8px 0 !important;
+}
+
+/* Additional overrides for text input padding */
+.mat-input-wrapper {
+  padding: 0 !important;
+}
+
+.mat-form-field-prefix,
+.mat-form-field-suffix {
+  padding: 0 !important;
+}
+
+/* Remove padding from specific input types */
+input[matInput] {
+  padding: 0 !important;
+}
+
+textarea[matInput] {
+  padding: 0 !important;
+}
+
+mat-select {
+  padding: 0 !important;
+}
+
+/* Override any remaining Material input padding */
+.mat-form-field .mat-input-element {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* MDC-specific overrides for Material Design Components (Global) */
+.mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+  min-height: 48px !important;
+}
+
+.mat-mdc-text-field-wrapper {
+  padding: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+}
+
+.mat-mdc-form-field-outline .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+}
+
+.mat-mdc-input-element {
+  padding: 8px 0 !important;
+}
+
+/* Target the specific MDC input classes globally */
+.mdc-text-field__input {
+  padding: 8px 0 !important;
+  height: auto !important;
+}
+
+.mdc-notched-outline .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+}
+
+/* MDC Select overrides globally */
+.mat-mdc-select {
+  padding: 8px 0 !important;
+}
+
+.mdc-select__anchor {
+  padding: 0 12px !important;
+}
+
+/* Additional MDC overrides */
+.mat-mdc-form-field-text-infix {
+  padding: 0 12px !important;
+}
+
+/* Floating label positioning - default state */
+.mat-mdc-form-field .mat-mdc-floating-label {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* Floating label when focused or has value - moves to top */
+.mat-mdc-form-field.mat-focused .mat-mdc-floating-label,
+.mat-mdc-form-field.mat-form-field-should-float .mat-mdc-floating-label,
+.mat-mdc-form-field .mdc-floating-label--float-above {
+  top: -8px !important;
+  transform: translateY(0) scale(0.75) !important;
+  background: white !important;
+  padding: 0 4px !important;
+  z-index: 2 !important;
+}
+
+/* Fix placeholder conflict with floating labels */
+.mat-mdc-form-field input::placeholder {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.mat-mdc-form-field.mat-focused input::placeholder {
+  opacity: 0.6 !important;
+}
+
+/* Ensure proper label behavior when placeholder exists */
+.mat-mdc-form-field:not(.mat-form-field-should-float) .mat-mdc-floating-label {
+  z-index: 1 !important;
+}
+
+/* Fix overall form field appearance */
+.mat-mdc-form-field-appearance-outline .mat-mdc-form-field-infix {
+  padding: 0 12px !important;
+  min-height: 48px !important;
+}
+
+/* Ensure proper text alignment */
+.mat-mdc-form-field .mat-mdc-form-field-infix input {
+  line-height: normal !important;
+}
+
+/* Fix notched outline for floating labels */
+.mat-mdc-form-field-appearance-outline .mdc-notched-outline .mdc-notched-outline__notch {
+  border-top: none !important;
+}
+
+.mat-mdc-form-field-appearance-outline.mat-focused .mdc-notched-outline__notch,
+.mat-mdc-form-field-appearance-outline.mat-form-field-should-float .mdc-notched-outline__notch {
+  border-top: none !important;
+}
+
+/* FINAL OVERRIDE - Material Icons with highest priority at end of file */
+.mat-icon,
+mat-icon,
+.material-icons {
+  font-family: 'Material Icons' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-feature-settings: 'liga' !important;
+  -webkit-font-feature-settings: 'liga' !important;
+  -webkit-font-smoothing: antialiased !important;
+  text-rendering: optimizeLegibility !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Force Material Icons to display correctly */
+.mat-icon:empty::before,
+mat-icon:empty::before {
+  content: attr(data-icon) !important;
+  font-family: 'Material Icons' !important;
+}
+
+/* Backup: If icon name is in the element content, force Material Icons font */
+.mat-icon,
+mat-icon {
+  speak: none !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  line-height: 1 !important;
+  
+  /* Better font loading */
+  -webkit-font-feature-settings: "liga" !important;
+  -moz-font-feature-settings: "liga=1" !important;
+  -moz-font-feature-settings: "liga" !important;
+  -ms-font-feature-settings: "liga" 1 !important;
+  -o-font-feature-settings: "liga" !important;
+  font-feature-settings: "liga" !important;
+}
+
+/* Global fix for Material Design Chips - prevent text cutoff */
+.mat-mdc-chip,
+.mdc-evolution-chip,
+mat-chip-row,
+.mat-mdc-chip-row {
+  max-width: none !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 32px !important;
+  padding: 6px 4px 6px 12px !important; /* Adjust padding for cancel button */
+  line-height: 1.3 !important;
+}
+
+.mat-mdc-chip-text,
+.mdc-evolution-chip__text-label {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+  max-width: none !important;
+  text-overflow: unset !important;
+}
+
+/* Fix chip grid container */
+.mat-mdc-chip-grid,
+.mat-mdc-chip-set {
+  overflow: visible !important;
+  flex-wrap: wrap !important;
+}
+
+/* Ensure proper spacing for chips */
+.mat-mdc-chip-grid .mat-mdc-chip {
+  margin: 4px !important;
+}
+
+/* Global fix for chip remove buttons - prevent cutoff */
+.mat-mdc-chip-remove,
+.mdc-evolution-chip__icon--trailing,
+button[matChipRemove] {
+  margin-left: 4px !important;
+  margin-right: 2px !important;
+  padding: 1px !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  overflow: visible !important;
+  position: relative !important;
+  right: 0 !important;
+}
+
+.mat-mdc-chip-remove .mat-icon,
+button[matChipRemove] .mat-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  line-height: 14px !important;
+}
+
+/* Ensure form fields don't cut off chip remove buttons */
+.mat-mdc-form-field {
+  overflow: visible !important;
+}
+
+.mat-mdc-form-field-infix {
+  overflow: visible !important;
+  padding-right: 8px !important;
+}
+
+.mat-mdc-form-field-outline,
+.mat-mdc-form-field-outline-start,
+.mat-mdc-form-field-outline-end {
+  overflow: visible !important;
+}
+
+/* Warning Snackbar for Authentication Errors */
+.warning-snackbar {
+  --mdc-snackbar-container-color: #ff9800 !important;
+  --mdc-snackbar-supporting-text-color: #fff !important;
+  --mat-snack-bar-button-color: #fff !important;
+  
+  .mat-mdc-snack-bar-container {
+    background-color: #ff9800 !important;
+    color: white !important;
+  }
+  
+  .mat-mdc-snack-bar-action {
+    color: white !important;
+    font-weight: 500 !important;
+  }
+}

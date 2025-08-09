@@ -15,6 +15,11 @@ const LeaveApplicationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  managerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserSchema',
+    required: false // Can be null if employee has no assigned manager
+  },
   leaveType: {
     type: String,
     required: true
@@ -42,8 +47,20 @@ const LeaveApplicationSchema = new mongoose.Schema({
     enum: ['Pending', 'Approved', 'Rejected'],
     default: 'Pending'
   },
+  requiresAdminApproval: {
+    type: Boolean,
+    default: false
+  },
   approvedBy: {
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserSchema'
+  },
+  adminApprovalStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: function() {
+      return this.requiresAdminApproval ? 'pending' : 'approved';
+    }
   },
   statusUpdatedOn: {
     type: Date
@@ -66,9 +83,6 @@ const LeaveApplicationSchema = new mongoose.Schema({
     enum: ['Morning', 'Afternoon', ''],
     default: ''
   },
-  department: {
-  type: String
-},
 totalDays: Number,
   session: {
     type: String,

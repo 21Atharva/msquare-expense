@@ -1,25 +1,8 @@
-.example-spacer {
-    flex: 1 1 auto;
-  }
-  
-  .example-sidenav-content {
-    display: flex;
-    height: 100%;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .example-sidenav {
-    padding-left: 50px;
-    padding-right: 100px;
-    padding-top: 50px;
-  }
-  
+/* Header Component Specific Styles */
 
-  
-.brand-logo {
-  max-width: 200px;
-  height: auto;
-  margin-bottom: 20px;
-  background: transparent;
+/* Loading and dashboard content styles can be added here if needed */
+
+/* Mobile responsive adjustments for header content */
+@media (max-width: 767px) {
+  /* Add any header-specific mobile styles here */
 }

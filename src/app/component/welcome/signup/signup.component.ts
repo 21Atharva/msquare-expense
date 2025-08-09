@@ -16,8 +16,7 @@ export class SignupComponent implements OnInit {
   currentStep: number = 1;
   @Output() switchToLogin = new EventEmitter<void>();
 
-  managersList: any[] = [];
-  departmentList: string[] = ['Development', 'Design', 'HR', 'Sales']; // Static list
+
 
   constructor(
     private route: ActivatedRoute,
@@ -34,25 +33,10 @@ export class SignupComponent implements OnInit {
       gmail: new FormControl('', [Validators.required, Validators.email]),
       password: new FormControl('', [Validators.required, Validators.minLength(8)]),
       pin: new FormControl('', [Validators.required, Validators.pattern(/^\d{4}$/)]),
-      role: new FormControl('employee', Validators.required),
-      department: new FormControl('', Validators.required)
+      role: new FormControl('employee', Validators.required)
     });
 
-    // Fetch list of managers
-  this.businessData.getManagers().subscribe({
-  next: (res: any) => {
-    this.managersList = (res.data || []).filter((mgr: any) => mgr.department?.trim());
-  },
-  error: (err) => {
-    console.error('Error fetching managers:', err);
   }
-});
-  }
-
-  getUniqueManagerDepartments(): string[] {
-  const allDepartments = this.managersList.map(m => m.department);
-  return [...new Set(allDepartments)]; // remove duplicates
-}
 
   nextStep(): void {
     if (this.currentStep === 1 && (
@@ -106,7 +90,7 @@ onProceed() {
 
   const formData = this.signUpForm.getRawValue();
   console.log("Signup payload being sent:", formData);
-  console.log('API URL will be:', 'http://localhost:3000/v1/api/USER/SIGN_UP');
+  console.log('🔧 SIGNUP - Using environment API URL');
 
   this.authService.onSignUp(formData)
     .then((userRole: string) => {

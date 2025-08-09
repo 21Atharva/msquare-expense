@@ -1,1 +1,6 @@
+# Don't redirect static assets
+/assets/*  /assets/:splat  200
+*.js  /:splat  200
+*.css  /:splat  200
+# Redirect everything else to index.html for SPA routing
 /*  /index.html 200
